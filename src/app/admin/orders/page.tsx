@@ -18,7 +18,8 @@ import {
   RotateCcw,
   User,
   MapPin,
-  DollarSign
+  DollarSign,
+  Phone
 } from 'lucide-react';
 
 interface Order {
@@ -31,7 +32,7 @@ interface Order {
   totalPrice: string;
   shippingAddr: string;
   createdAt: string;
-  user: { name: string; email: string };
+  user: { name: string; email: string; whatsapp?: string | null };
   items: { product: { name: string }; quantity: number; price: string }[];
   paymentConfirm?: { imageUrl: string; status: string; adminNote?: string | null };
 }
@@ -300,6 +301,12 @@ export default function AdminOrdersPage() {
                       <td className="p-4">
                         <p className="font-semibold text-charcoal">{order.user.name}</p>
                         <p className="text-xs text-gray-400">{order.user.email}</p>
+                        {order.user.whatsapp && (
+                          <p className="text-xs text-green-600 font-medium flex items-center gap-1 mt-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                            WA: {order.user.whatsapp}
+                          </p>
+                        )}
                       </td>
                       <td className="p-4 text-gray-500">
                         {new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -396,6 +403,18 @@ export default function AdminOrdersPage() {
                   </div>
                   <p className="text-sm font-semibold text-charcoal">{selectedOrder.user.name}</p>
                   <p className="text-xs text-gray-500">{selectedOrder.user.email}</p>
+                  {selectedOrder.user.whatsapp && (
+                    <div className="mt-3">
+                      <a
+                        href={`https://wa.me/${selectedOrder.user.whatsapp.replace(/^0/, '62').replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 rounded-xl text-xs font-bold transition shadow-sm"
+                      >
+                        <Phone size={12} className="text-green-600" /> Hubungi WA: {selectedOrder.user.whatsapp}
+                      </a>
+                    </div>
+                  )}
                 </div>
                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                   <div className="flex items-center gap-2 mb-2 text-charcoal font-bold text-sm">
@@ -502,17 +521,21 @@ export default function AdminOrdersPage() {
                     <label className="block text-xs font-bold text-gray-500 mb-1.5">Ubah Status Pengiriman</label>
                     <select
                       value={modalShippingStatus}
-                      disabled={isOrderLocked}
+                      disabled={isOrderLocked || selectedOrder.paymentStatus !== 'APPROVED'}
                       onChange={e => setModalShippingStatus(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed font-medium"
                     >
                       {SHIPPING_STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
-                    {isOrderLocked && (
+                    {isOrderLocked ? (
                       <p className="text-[10px] text-indigo-700 font-bold bg-indigo-50 p-2 border border-indigo-200 rounded-lg mt-2 flex items-center gap-1.5">
                         🔒 Pesanan telah diselesaikan/dibatalkan & dikunci secara permanen.
                       </p>
-                    )}
+                    ) : selectedOrder.paymentStatus !== 'APPROVED' ? (
+                      <p className="text-[10px] text-red-700 font-bold bg-red-50 p-2.5 border border-red-200 rounded-lg mt-2 leading-tight">
+                        ⚠️ Status pengiriman tidak dapat diubah sebelum pembayaran disetujui (APPROVED).
+                      </p>
+                    ) : null}
                   </div>
 
                   {/* Delivery Proof Action */}
@@ -528,7 +551,7 @@ export default function AdminOrdersPage() {
                             alt="Bukti Pengiriman" 
                             className="w-full h-full object-contain"
                           />
-                          {!isOrderLocked && (
+                          {!isOrderLocked && selectedOrder.paymentStatus === 'APPROVED' && (
                             <button
                               type="button"
                               onClick={() => setDeliveryProof('')}
@@ -539,10 +562,14 @@ export default function AdminOrdersPage() {
                           )}
                         </div>
                       </div>
-                    ) : isOrderLocked ? (
+                    ) : (isOrderLocked || selectedOrder.paymentStatus !== 'APPROVED') ? (
                       <div className="p-4 bg-gray-50 rounded-xl text-center text-xs text-gray-400 border border-dashed flex flex-col items-center justify-center gap-1">
                         <ImageIcon size={18} className="text-gray-400" />
-                        <span>Tidak ada bukti pengiriman yang diunggah.</span>
+                        <span>
+                          {isOrderLocked 
+                            ? 'Tidak ada bukti pengiriman yang diunggah.' 
+                            : 'Upload bukti pengiriman dikunci sebelum pembayaran disetujui (APPROVED).'}
+                        </span>
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -586,7 +613,7 @@ export default function AdminOrdersPage() {
                       <textarea
                         rows={2}
                         value={deliveryNote}
-                        disabled={isOrderLocked}
+                        disabled={isOrderLocked || selectedOrder.paymentStatus !== 'APPROVED'}
                         onChange={e => setDeliveryNote(e.target.value)}
                         placeholder="Contoh: Kurir Budi, Mobil Colt Diesel B 1234 ABC. Sudah diterima Bapak Joko."
                         className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none disabled:bg-gray-100 disabled:text-gray-500"

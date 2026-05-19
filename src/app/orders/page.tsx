@@ -39,6 +39,7 @@ interface Order {
   totalPrice: string;
   createdAt: string;
   shippingAddr: string;
+  user?: { id: number; name: string; email: string; whatsapp?: string | null };
   items: OrderItem[];
   paymentConfirm?: { status: string; adminNote: string | null };
 }
@@ -62,6 +63,15 @@ const SHIPPING_STATUS_LABELS: Record<string, { label: string; color: string }> =
 export default function UserOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Cancel Modal State
+  const [cancelModal, setCancelModal] = useState<{
+    visible: boolean;
+    orderId: number | null;
+  }>({
+    visible: false,
+    orderId: null
+  });
 
   // Snackbar State
   const [snackbar, setSnackbar] = useState({
@@ -124,6 +134,23 @@ export default function UserOrdersPage() {
     }
   };
 
+  const handleCancelOrder = (id: number) => {
+    setCancelModal({ visible: true, orderId: id });
+  };
+
+  const confirmCancelOrder = async () => {
+    if (!cancelModal.orderId) return;
+    try {
+      await api.post(`/orders/${cancelModal.orderId}/cancel`);
+      triggerSnackbar('Pesanan berhasil dibatalkan!', 'success');
+      setCancelModal({ visible: false, orderId: null });
+      fetchOrders();
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || 'Gagal membatalkan pesanan';
+      triggerSnackbar(errMsg, 'error');
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
@@ -173,12 +200,22 @@ export default function UserOrdersPage() {
                         <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Total Tagihan</p>
                         <p className="text-xl font-extrabold text-primary">Rp {Number(order.totalPrice).toLocaleString('id-ID')}</p>
                       </div>
-                      <button 
-                        onClick={() => downloadInvoice(order.id)} 
-                        className="flex items-center gap-1.5 border border-charcoal text-charcoal px-4 py-2 rounded-xl hover:bg-charcoal hover:text-white transition font-bold text-xs shadow-sm"
-                      >
-                        <Download size={13} /> Cetak Invoice PDF
-                      </button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button 
+                          onClick={() => downloadInvoice(order.id)} 
+                          className="flex items-center gap-1.5 border border-charcoal text-charcoal px-4 py-2 rounded-xl hover:bg-charcoal hover:text-white transition font-bold text-xs shadow-sm"
+                        >
+                          <Download size={13} /> Cetak Invoice PDF
+                        </button>
+                        {order.shippingStatus === 'PENDING' && (
+                          <button 
+                            onClick={() => handleCancelOrder(order.id)} 
+                            className="flex items-center gap-1.5 border border-red-500 text-red-500 px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white transition font-bold text-xs shadow-sm"
+                          >
+                            <XCircle size={13} /> Batalkan Pesanan
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -195,7 +232,7 @@ export default function UserOrdersPage() {
                       </div>
                       
                       {/* Payment Actions */}
-                      {(order.paymentStatus === 'PENDING' || order.paymentStatus === 'RETURNED' || order.paymentStatus === 'REJECTED') && (
+                      {order.shippingStatus !== 'CANCELLED' && (order.paymentStatus === 'PENDING' || order.paymentStatus === 'RETURNED' || order.paymentStatus === 'REJECTED') && (
                         <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between gap-4 mt-2">
                           <p className="text-xs text-blue-700 leading-tight">
                             {order.paymentStatus === 'RETURNED'
@@ -270,9 +307,16 @@ export default function UserOrdersPage() {
                   </div>
 
                   {/* Shopping Address */}
-                  <div className="px-6 pt-4 text-xs text-gray-500 flex items-start gap-1">
-                    <MapPin size={13} className="shrink-0 mt-0.5" />
-                    <span><strong>Alamat Pengiriman:</strong> {order.shippingAddr}</span>
+                  <div className="px-6 pt-4 text-xs text-gray-500 space-y-1">
+                    <div className="flex items-start gap-1">
+                      <MapPin size={13} className="shrink-0 mt-0.5" />
+                      <span><strong>Alamat Pengiriman:</strong> {order.shippingAddr}</span>
+                    </div>
+                    {order.user?.whatsapp && (
+                      <div className="flex items-center gap-1 text-green-600 font-medium pl-4">
+                        <span>💬 <strong>WhatsApp:</strong> {order.user.whatsapp}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Ordered Items List */}
@@ -303,6 +347,45 @@ export default function UserOrdersPage() {
           </div>
         )}
       </div>
+
+      {/* Custom Confirmation Modal */}
+      {cancelModal.visible && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-300">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 transform transition-all duration-300 scale-100 animate-slide-up">
+            <div className="flex flex-col items-center text-center">
+              {/* Icon Bubble */}
+              <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
+                <AlertTriangle size={32} className="text-red-500" />
+              </div>
+              
+              <h3 className="text-xl font-black text-charcoal mb-2">
+                Konfirmasi Pembatalan
+              </h3>
+              
+              <p className="text-sm text-gray-500 leading-relaxed mb-6">
+                Apakah Anda yakin ingin membatalkan <strong>Pesanan #{cancelModal.orderId}</strong>? Tindakan ini bersifat permanen dan pesanan tidak dapat diaktifkan kembali.
+              </p>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  onClick={() => setCancelModal({ visible: false, orderId: null })}
+                  className="flex-1 py-3.5 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition font-bold text-sm shadow-sm"
+                >
+                  Kembali
+                </button>
+                <button
+                  onClick={confirmCancelOrder}
+                  className="flex-1 py-3.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition font-bold text-sm shadow-lg shadow-red-200"
+                >
+                  Ya, Batalkan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toast / Snackbar Notification Container */}
       {snackbar.visible && (
         <div className="fixed top-6 right-6 z-50 animate-slide-in pointer-events-auto">

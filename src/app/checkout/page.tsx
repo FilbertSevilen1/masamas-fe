@@ -58,6 +58,7 @@ export default function CheckoutPage() {
                 value={shippingAddr}
                 onChange={(e) => setShippingAddr(e.target.value)}
               />
+
             </div>
 
             <div className="bg-blue-50 border border-blue-200 p-5 rounded-xl text-sm text-blue-700">

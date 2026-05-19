@@ -5,12 +5,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import api, { saveAuth } from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
-import { User, Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Mail, Eye, EyeOff, Phone } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -23,7 +24,7 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
     try {
-      await api.post('/auth/register', { name, email, password });
+      await api.post('/auth/register', { name, email, password, whatsapp });
       // Auto-login after register
       const loginRes = await api.post('/auth/login', { email, password });
       const { token, user } = loginRes.data;
@@ -85,6 +86,24 @@ export default function RegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-charcoal mb-2">Nomor WhatsApp</label>
+                <div className="relative">
+                  <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="whatsapp"
+                    type="tel"
+                    required
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="081234567890"
+                    pattern="[0-9]{9,15}"
+                    title="Nomor WhatsApp harus berupa angka dengan panjang 9-15 digit."
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
                   />
                 </div>

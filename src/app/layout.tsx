@@ -18,7 +18,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: {
-    default: 'Masamas — Material Bangunan Berkualitas Tinggi',
+    default: 'Masamas - Material Bangunan Berkualitas Tinggi',
     template: '%s | Masamas',
   },
   description: 'Masamas menyediakan material bangunan berkualitas tinggi untuk proyek konstruksi industri dan residensial. Semen, baja, batu bata, atap, dan lebih dari 500 produk tersedia.',

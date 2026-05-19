@@ -34,6 +34,7 @@ export default function HomePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { addToCart } = useCartStore();
 
   const [quantities, setQuantities] = useState<Record<number, number>>({});
@@ -51,6 +52,9 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsAdmin(localStorage.getItem('role') === 'ADMIN');
+    }
     Promise.all([
       api.get('/cms/map').then(r => setCms(r.data)).catch(() => {}),
       api.get('/categories').then(r => setCategories(r.data.slice(0, 8))).catch(() => {}),
@@ -139,7 +143,9 @@ export default function HomePage() {
           ) : categories.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <p className="text-xl font-semibold">Belum ada kategori</p>
-              <Link href="/admin/categories" className="text-primary hover:underline mt-2 block text-sm">Tambah kategori di Admin</Link>
+              {isAdmin && (
+                <Link href="/admin/categories" className="text-primary hover:underline mt-2 block text-sm">Tambah kategori di Admin</Link>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -186,7 +192,9 @@ export default function HomePage() {
           ) : products.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <p className="text-xl font-semibold">Belum ada produk</p>
-              <Link href="/admin/products" className="text-primary hover:underline mt-2 block text-sm">Tambah produk di Admin</Link>
+              {isAdmin && (
+                <Link href="/admin/products" className="text-primary hover:underline mt-2 block text-sm">Tambah produk di Admin</Link>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">

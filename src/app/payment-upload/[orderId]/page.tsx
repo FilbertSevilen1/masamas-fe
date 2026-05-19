@@ -75,7 +75,7 @@ export default function PaymentUploadPage() {
   if (success) return (
     <main className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      <div className="flex-grow flex items-center justify-center px-4">
+      <div className="flex-grow flex items-center justify-center px-4 py-16">
         <div className="bg-white rounded-2xl p-12 shadow-sm text-center max-w-md w-full">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={40} className="text-green-500" />
