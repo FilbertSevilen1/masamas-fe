@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import api from '@/lib/api';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { Plus, Edit2, Trash2, X, Save, Image } from 'lucide-react';
 
 interface Category { id: number; name: string; slug: string; image: string | null; _count: { products: number } }
@@ -13,6 +14,45 @@ export default function AdminCategoriesPage() {
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [form, setForm] = useState({ name: '', image: '' });
+
+  const [dialog, setDialog] = useState<{
+    isOpen: boolean;
+    type?: 'danger' | 'warning' | 'info' | 'success';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    showCancel?: boolean;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setDialog({
+      isOpen: true,
+      type: 'danger',
+      title,
+      message,
+      confirmText: 'Hapus',
+      cancelText: 'Batal',
+      showCancel: true,
+      onConfirm,
+    });
+  };
+
+  const showAlert = (title: string, message: string, type: 'danger' | 'success' | 'info' = 'danger') => {
+    setDialog({
+      isOpen: true,
+      type,
+      title,
+      message,
+      confirmText: 'OK',
+      showCancel: false,
+    });
+  };
 
   useEffect(() => { fetchCategories(); }, []);
 
@@ -43,13 +83,22 @@ export default function AdminCategoriesPage() {
       }
       setModal(false);
       fetchCategories();
-    } catch { alert('Gagal menyimpan kategori'); }
+      showAlert('Sukses', 'Kategori berhasil disimpan', 'success');
+    } catch {
+      showAlert('Gagal', 'Gagal menyimpan kategori', 'danger');
+    }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Yakin hapus kategori ini?')) return;
-    await api.delete(`/categories/${id}`);
-    fetchCategories();
+  const handleDelete = (id: number) => {
+    showConfirm('Hapus Kategori', 'Apakah Anda yakin ingin menghapus kategori ini? Semua produk dalam kategori ini mungkin akan terpengaruh.', async () => {
+      try {
+        await api.delete(`/categories/${id}`);
+        fetchCategories();
+        showAlert('Sukses', 'Kategori berhasil dihapus', 'success');
+      } catch {
+        showAlert('Gagal', 'Gagal menghapus kategori', 'danger');
+      }
+    });
   };
 
   return (
@@ -116,6 +165,18 @@ export default function AdminCategoriesPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={dialog.isOpen}
+        type={dialog.type}
+        title={dialog.title}
+        message={dialog.message}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        showCancel={dialog.showCancel}
+        onConfirm={dialog.onConfirm}
+        onClose={() => setDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </main>
   );
 }

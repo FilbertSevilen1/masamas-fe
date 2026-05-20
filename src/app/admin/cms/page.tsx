@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import api from '@/lib/api';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { Save, RefreshCw } from 'lucide-react';
 
 interface ContentItem {
@@ -25,6 +26,32 @@ export default function AdminCMSPage() {
   const [saved, setSaved] = useState(false);
   const [edits, setEdits] = useState<Record<string, string>>({});
 
+  const [dialog, setDialog] = useState<{
+    isOpen: boolean;
+    type?: 'danger' | 'warning' | 'info' | 'success';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    showCancel?: boolean;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
+
+  const showAlert = (title: string, message: string, type: 'danger' | 'success' | 'info' = 'danger') => {
+    setDialog({
+      isOpen: true,
+      type,
+      title,
+      message,
+      confirmText: 'OK',
+      showCancel: false,
+    });
+  };
+
   useEffect(() => { fetchContents(); }, []);
 
   const fetchContents = async () => {
@@ -44,8 +71,11 @@ export default function AdminCMSPage() {
       await api.put('/cms/bulk', updates);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-    } catch { alert('Gagal menyimpan konten'); }
-    finally { setSaving(false); }
+    } catch {
+      showAlert('Gagal', 'Gagal menyimpan konten', 'danger');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const groups = [...new Set(contents.map(c => c.group))];
@@ -121,6 +151,18 @@ export default function AdminCMSPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={dialog.isOpen}
+        type={dialog.type}
+        title={dialog.title}
+        message={dialog.message}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        showCancel={dialog.showCancel}
+        onConfirm={dialog.onConfirm}
+        onClose={() => setDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </main>
   );
 }

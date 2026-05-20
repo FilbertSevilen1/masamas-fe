@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import api from '@/lib/api';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { Plus, Edit2, Trash2, X, Save, Image, Search } from 'lucide-react';
 
 interface Category { id: number; name: string }
@@ -19,6 +20,45 @@ export default function AdminProductsPage() {
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ categoryId: '', name: '', description: '', price: '', stock: '', thumbnail: '' });
+
+  const [dialog, setDialog] = useState<{
+    isOpen: boolean;
+    type?: 'danger' | 'warning' | 'info' | 'success';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    showCancel?: boolean;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setDialog({
+      isOpen: true,
+      type: 'danger',
+      title,
+      message,
+      confirmText: 'Hapus',
+      cancelText: 'Batal',
+      showCancel: true,
+      onConfirm,
+    });
+  };
+
+  const showAlert = (title: string, message: string, type: 'danger' | 'success' | 'info' = 'danger') => {
+    setDialog({
+      isOpen: true,
+      type,
+      title,
+      message,
+      confirmText: 'OK',
+      showCancel: false,
+    });
+  };
 
   useEffect(() => {
     fetchData();
@@ -61,13 +101,22 @@ export default function AdminProductsPage() {
       }
       setModal(false);
       fetchData();
-    } catch { alert('Gagal menyimpan produk'); }
+      showAlert('Sukses', 'Produk berhasil disimpan', 'success');
+    } catch {
+      showAlert('Gagal', 'Gagal menyimpan produk', 'danger');
+    }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Yakin hapus produk ini?')) return;
-    await api.delete(`/products/${id}`);
-    fetchData();
+  const handleDelete = (id: number) => {
+    showConfirm('Hapus Produk', 'Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan.', async () => {
+      try {
+        await api.delete(`/products/${id}`);
+        fetchData();
+        showAlert('Sukses', 'Produk berhasil dihapus', 'success');
+      } catch {
+        showAlert('Gagal', 'Gagal menghapus produk', 'danger');
+      }
+    });
   };
 
   return (
@@ -185,6 +234,18 @@ export default function AdminProductsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={dialog.isOpen}
+        type={dialog.type}
+        title={dialog.title}
+        message={dialog.message}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        showCancel={dialog.showCancel}
+        onConfirm={dialog.onConfirm}
+        onClose={() => setDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </main>
   );
 }
