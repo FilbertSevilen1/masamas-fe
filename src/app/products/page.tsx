@@ -5,8 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import api from '@/lib/api';
-import { Search, Filter, ChevronLeft, ChevronRight, ShoppingCart, CheckCircle2, X } from 'lucide-react';
-import { useCartStore } from '@/store/useCartStore';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Product {
   id: number;
@@ -34,24 +33,13 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const { addToCart } = useCartStore();
-
-  const [quantities, setQuantities] = useState<Record<number, number>>({});
-  const [snackbar, setSnackbar] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'warning' }>({
-    visible: false,
-    message: '',
-    type: 'success'
-  });
-
-  const triggerSnackbar = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
-    setSnackbar({ visible: true, message, type });
-    setTimeout(() => {
-      setSnackbar(prev => ({ ...prev, visible: false }));
-    }, 3000);
-  };
+  const [whatsapp, setWhatsapp] = useState('');
 
   useEffect(() => {
     fetchCategories();
+    api.get('/cms/map')
+      .then(res => setWhatsapp(res.data.footer_whatsapp || '+62 812 3456 7890'))
+      .catch(() => setWhatsapp('+62 812 3456 7890'));
   }, []);
 
   useEffect(() => {
@@ -87,6 +75,9 @@ export default function ProductsPage() {
     setPage(1);
     fetchProducts();
   };
+
+  const cleanNum = whatsapp.replace(/[^0-9]/g, '');
+  const waNumber = cleanNum.startsWith('0') ? `62${cleanNum.slice(1)}` : cleanNum;
 
   return (
     <main className="min-h-screen flex flex-col bg-gray-50">
@@ -163,88 +154,51 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map(product => (
-              <div key={product.id} className="card-premium group">
-                <Link href={`/products/${product.slug}`}>
-                  <div className="aspect-square bg-gray-100 overflow-hidden">
-                    {product.thumbnail ? (
-                      <img src={product.thumbnail} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">
-                        <span className="text-5xl">📦</span>
-                      </div>
-                    )}
-                  </div>
-                </Link>
-                <div className="p-4">
-                  <p className="text-xs text-primary font-semibold uppercase tracking-wider mb-1">{product.category.name}</p>
-                  <Link href={`/products/${product.slug}`}>
-                    <h3 className="font-bold text-charcoal text-sm mb-3 line-clamp-2 hover:text-primary transition">{product.name}</h3>
-                  </Link>
-                  <div className="space-y-3 mt-3">
-                    {/* Price display */}
-                    <div className="flex justify-between items-center text-xs font-semibold">
-                      <span className="text-gray-400">Harga Satuan:</span>
-                      <span className="font-extrabold text-charcoal">Rp {Number(product.price).toLocaleString('id-ID')}</span>
-                    </div>
+            {products.map(product => {
+              const waLink = `https://wa.me/${waNumber}?text=${encodeURIComponent(`Halo Admin Masamas, saya tertarik untuk memesan produk:\n\n*Nama Produk*: ${product.name}\n*Jumlah*: 1 unit\n*Harga*: Rp ${Number(product.price).toLocaleString('id-ID')}\n\nApakah barang tersebut tersedia? Mohon informasinya.`)}`;
 
-                    {/* Compact Qty Selector + Add Button */}
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50 overflow-hidden shrink-0">
-                        <button 
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setQuantities(prev => ({
-                              ...prev,
-                              [product.id]: Math.max(1, (prev[product.id] || 1) - 1)
-                            }));
-                          }}
-                          disabled={product.stock === 0}
-                          className="px-2.5 py-1.5 hover:bg-gray-200 transition text-gray-500 font-bold text-xs disabled:opacity-30"
-                        >
-                          -
-                        </button>
-                        <span className="px-2 text-xs font-bold text-charcoal min-w-[20px] text-center bg-white py-1">
-                          {quantities[product.id] || 1}
-                        </span>
-                        <button 
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setQuantities(prev => ({
-                              ...prev,
-                              [product.id]: Math.min(product.stock, (prev[product.id] || 1) + 1)
-                            }));
-                          }}
-                          disabled={product.stock === 0}
-                          className="px-2.5 py-1.5 hover:bg-gray-200 transition text-gray-500 font-bold text-xs disabled:opacity-30"
-                        >
-                          +
-                        </button>
+              return (
+                <div key={product.id} className="card-premium group flex flex-col justify-between h-full bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition duration-300">
+                  <div>
+                    <Link href={`/products/${product.slug}`}>
+                      <div className="aspect-square bg-gray-100 overflow-hidden">
+                        {product.thumbnail ? (
+                          <img src={product.thumbnail} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                            <span className="text-5xl">📦</span>
+                          </div>
+                        )}
                       </div>
-                      
-                      <button
-                        type="button"
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          const qty = quantities[product.id] || 1;
-                          await addToCart(product.id, qty);
-                          triggerSnackbar(`Berhasil menambahkan ${qty} unit "${product.name}" ke keranjang belanja Anda!`, 'success');
-                          // Reset qty to 1
-                          setQuantities(prev => ({ ...prev, [product.id]: 1 }));
-                        }}
-                        disabled={product.stock === 0}
-                        className="flex-grow flex items-center justify-center gap-1 py-1.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-black transition shadow-sm disabled:opacity-40 shrink-0"
-                      >
-                        <ShoppingCart size={13} /> Beli
-                      </button>
+                    </Link>
+                    <div className="p-4">
+                      <p className="text-xs text-primary font-semibold uppercase tracking-wider mb-1">{product.category.name}</p>
+                      <Link href={`/products/${product.slug}`}>
+                        <h3 className="font-bold text-charcoal text-sm mb-3 line-clamp-2 hover:text-primary transition">{product.name}</h3>
+                      </Link>
+                      <div className="flex justify-between items-center text-xs font-semibold mb-3">
+                        <span className="text-gray-400">Harga Satuan:</span>
+                        <span className="font-extrabold text-charcoal">Rp {Number(product.price).toLocaleString('id-ID')}</span>
+                      </div>
                     </div>
                   </div>
-                  {product.stock === 0 && <p className="text-[10px] font-bold text-red-500 mt-2 text-center bg-red-50 py-1 rounded">Stok habis</p>}
+
+                  <div className="p-4 pt-0 space-y-2">
+                    <a
+                      href={waLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl text-xs font-bold transition shadow-sm"
+                    >
+                      <svg viewBox="0 0 24 24" width={14} height={14} fill="currentColor">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.458 5.705 1.459h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                      </svg>
+                      Beli via WhatsApp
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -279,26 +233,6 @@ export default function ProductsPage() {
       </div>
 
       <Footer />
-
-      {/* Toast / Snackbar Notification Container */}
-      {snackbar.visible && (
-        <div className="fixed top-6 right-6 z-50 animate-slide-in pointer-events-auto">
-          <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl border backdrop-blur-md max-w-md ${
-            snackbar.type === 'success' ? 'bg-green-500/90 text-white border-green-600' :
-            snackbar.type === 'error' ? 'bg-red-500/90 text-white border-red-600' :
-            'bg-orange-500/90 text-white border-orange-600'
-          }`}>
-            {snackbar.type === 'success' ? <CheckCircle2 size={18} className="shrink-0" /> : null}
-            <span className="text-xs font-bold leading-tight">{snackbar.message}</span>
-            <button 
-              onClick={() => setSnackbar(prev => ({ ...prev, visible: false }))}
-              className="p-1 hover:bg-white/20 rounded-full transition ml-auto"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

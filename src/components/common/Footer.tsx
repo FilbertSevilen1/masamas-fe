@@ -83,8 +83,6 @@ const Footer = () => {
             <li><Link href="/categories" className="hover:text-primary transition-colors">Kategori</Link></li>
             <li><Link href="/about" className="hover:text-primary transition-colors">Tentang Kami</Link></li>
             <li><Link href="/contact" className="hover:text-primary transition-colors">Hubungi Kami</Link></li>
-            <li><Link href="/cart" className="hover:text-primary transition-colors">Keranjang</Link></li>
-            <li><Link href="/orders" className="hover:text-primary transition-colors">Pesanan Saya</Link></li>
           </ul>
         </div>
 

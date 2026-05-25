@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import api from '@/lib/api';
-import { ShoppingCart, Plus, Minus, ArrowLeft, Package, Tag, CheckCircle, CheckCircle2, X } from 'lucide-react';
-import { useCartStore } from '@/store/useCartStore';
+import { Plus, Minus, Tag } from 'lucide-react';
 
 interface Product {
   id: number;
@@ -27,36 +26,18 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
-  const [addedToCart, setAddedToCart] = useState(false);
-  const { addToCart } = useCartStore();
-
-  const [snackbar, setSnackbar] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'warning' }>({
-    visible: false,
-    message: '',
-    type: 'success'
-  });
-
-  const triggerSnackbar = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
-    setSnackbar({ visible: true, message, type });
-    setTimeout(() => {
-      setSnackbar(prev => ({ ...prev, visible: false }));
-    }, 3000);
-  };
+  const [whatsapp, setWhatsapp] = useState('');
 
   useEffect(() => {
     api.get(`/products/${slug}`)
       .then(res => setProduct(res.data))
       .catch(() => setProduct(null))
       .finally(() => setLoading(false));
-  }, [slug]);
 
-  const handleAddToCart = async () => {
-    if (!product) return;
-    await addToCart(product.id, qty);
-    setAddedToCart(true);
-    triggerSnackbar(`Berhasil menambahkan ${qty} unit "${product.name}" ke keranjang belanja Anda!`, 'success');
-    setTimeout(() => setAddedToCart(false), 2500);
-  };
+    api.get('/cms/map')
+      .then(res => setWhatsapp(res.data.footer_whatsapp || '+62 812 3456 7890'))
+      .catch(() => setWhatsapp('+62 812 3456 7890'));
+  }, [slug]);
 
   const allImages = product ? [
     ...(product.thumbnail ? [product.thumbnail] : []),
@@ -87,6 +68,10 @@ export default function ProductDetailPage() {
       <Footer />
     </main>
   );
+
+  const cleanNum = whatsapp.replace(/[^0-9]/g, '');
+  const waNumber = cleanNum.startsWith('0') ? `62${cleanNum.slice(1)}` : cleanNum;
+  const waLink = `https://wa.me/${waNumber}?text=${encodeURIComponent(`Halo Admin Masamas, saya tertarik untuk memesan produk:\n\n*Nama Produk*: ${product.name}\n*Jumlah*: ${qty} unit\n*Harga*: Rp ${Number(product.price).toLocaleString('id-ID')}\n\nApakah barang tersebut tersedia? Mohon informasinya.`)}`;
 
   return (
     <main className="min-h-screen flex flex-col bg-gray-50">
@@ -133,23 +118,12 @@ export default function ProductDetailPage() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full uppercase">{product.category.name}</span>
-              {product.stock > 0 ? (
-                <span className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full flex items-center gap-1">
-                  <CheckCircle size={12} /> Tersedia
-                </span>
-              ) : (
-                <span className="text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full">Stok Habis</span>
-              )}
             </div>
 
             <h1 className="text-3xl font-bold text-charcoal mb-4 leading-snug">{product.name}</h1>
             <p className="text-4xl font-bold text-primary mb-6">Rp {Number(product.price).toLocaleString('id-ID')}</p>
 
             <div className="bg-white rounded-2xl p-5 mb-6 shadow-sm">
-              <div className="flex items-center gap-3 text-sm text-gray-600 mb-3">
-                <Package size={16} className="text-primary" />
-                <span>Stok tersedia: <strong className="text-charcoal">{product.stock} unit</strong></span>
-              </div>
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Tag size={16} className="text-primary" />
                 <span>Kategori: <strong className="text-charcoal">{product.category.name}</strong></span>
@@ -158,56 +132,34 @@ export default function ProductDetailPage() {
 
             <p className="text-gray-600 leading-relaxed mb-8 whitespace-pre-line">{product.description}</p>
 
-            {/* Quantity + Add to Cart */}
+            {/* Quantity + Order via WhatsApp */}
             <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
+              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white">
                 <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-3 hover:bg-gray-100 transition">
                   <Minus size={16} />
                 </button>
                 <span className="px-5 font-bold text-charcoal text-lg">{qty}</span>
-                <button onClick={() => setQty(Math.min(product.stock, qty + 1))} className="px-4 py-3 hover:bg-gray-100 transition">
+                <button onClick={() => setQty(qty + 1)} className="px-4 py-3 hover:bg-gray-100 transition">
                   <Plus size={16} />
                 </button>
               </div>
-              <button
-                onClick={handleAddToCart}
-                disabled={product.stock === 0}
-                className={`flex-grow flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition shadow-lg ${addedToCart ? 'bg-green-500 text-white shadow-green-200' : 'bg-primary text-white hover:bg-primary-dark shadow-primary/30'} disabled:opacity-40`}
+              <a
+                href={waLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-grow flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition shadow-lg bg-[#25D366] text-white hover:bg-[#20ba5a] shadow-emerald-100 hover:scale-[1.02] active:scale-95 duration-200"
               >
-                {addedToCart ? <><CheckCircle size={20} /> Ditambahkan!</> : <><ShoppingCart size={20} /> Tambah ke Keranjang</>}
-              </button>
+                <svg viewBox="0 0 24 24" width={20} height={20} fill="currentColor" className="shrink-0">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.458 5.705 1.459h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg>
+                <span>Beli via WhatsApp</span>
+              </a>
             </div>
-            <Link
-              href="/cart"
-              className="w-full block text-center py-4 border-2 border-charcoal text-charcoal rounded-xl font-bold hover:bg-charcoal hover:text-white transition"
-            >
-              Lihat Keranjang
-            </Link>
           </div>
         </div>
       </div>
 
       <Footer />
-
-      {/* Toast / Snackbar Notification Container */}
-      {snackbar.visible && (
-        <div className="fixed top-6 right-6 z-50 animate-slide-in pointer-events-auto">
-          <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl border backdrop-blur-md max-w-md ${
-            snackbar.type === 'success' ? 'bg-green-500/90 text-white border-green-600' :
-            snackbar.type === 'error' ? 'bg-red-500/90 text-white border-red-600' :
-            'bg-orange-500/90 text-white border-orange-600'
-          }`}>
-            {snackbar.type === 'success' ? <CheckCircle2 size={18} className="shrink-0" /> : null}
-            <span className="text-xs font-bold leading-tight">{snackbar.message}</span>
-            <button 
-              onClick={() => setSnackbar(prev => ({ ...prev, visible: false }))}
-              className="p-1 hover:bg-white/20 rounded-full transition ml-auto"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

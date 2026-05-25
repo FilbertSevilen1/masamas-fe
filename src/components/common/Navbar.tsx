@@ -68,22 +68,6 @@ const Navbar = () => {
 
           {/* Icons */}
           <div className="hidden md:flex items-center space-x-4">
-            {isLoggedIn && (
-              <>
-                <Link href="/cart" className="p-2 text-charcoal hover:text-primary transition-colors relative">
-                  <ShoppingCart size={22} />
-                  {cartItemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                      {cartItemCount}
-                    </span>
-                  )}
-                </Link>
-                <Link href="/orders" className="p-2 text-charcoal hover:text-primary transition-colors">
-                  <Package size={22} />
-                </Link>
-              </>
-            )}
-
             {isLoggedIn ? (
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -98,7 +82,7 @@ const Navbar = () => {
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-in slide-in-from-top-2 duration-200 z-50">
                     {isAdmin && (
                       <Link
-                        href="/admin/orders"
+                        href="/admin"
                         className="flex items-center space-x-2 px-4 py-3 text-sm font-medium text-charcoal hover:bg-primary hover:text-white transition-colors"
                         onClick={() => setDropdownOpen(false)}
                       >
@@ -106,14 +90,6 @@ const Navbar = () => {
                         <span>Admin Panel</span>
                       </Link>
                     )}
-                    <Link
-                      href="/orders"
-                      className="flex items-center space-x-2 px-4 py-3 text-sm font-medium text-charcoal hover:bg-gray-50 transition-colors"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      <Package size={16} />
-                      <span>My Orders</span>
-                    </Link>
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center space-x-2 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
@@ -138,16 +114,6 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-4">
-            {isLoggedIn && (
-              <Link href="/cart" className="p-2 text-charcoal relative">
-                <ShoppingCart size={22} />
-                {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                    {cartItemCount}
-                  </span>
-                )}
-              </Link>
-            )}
             <button onClick={() => setIsOpen(!isOpen)} className="text-charcoal">
               {isOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
@@ -168,13 +134,10 @@ const Navbar = () => {
               {isLoggedIn ? (
                 <>
                   {isAdmin && (
-                    <Link href="/admin/orders" onClick={() => setIsOpen(false)} className="flex items-center space-x-2 px-3 py-3 bg-charcoal text-white rounded-xl font-medium">
+                    <Link href="/admin" onClick={() => setIsOpen(false)} className="flex items-center space-x-2 px-3 py-3 bg-charcoal text-white rounded-xl font-medium">
                       <ShieldCheck size={18} /><span>Admin Panel</span>
                     </Link>
                   )}
-                  <Link href="/orders" onClick={() => setIsOpen(false)} className="flex items-center space-x-2 px-3 py-3 bg-gray-100 text-charcoal rounded-xl font-medium">
-                    <Package size={18} /><span>My Orders</span>
-                  </Link>
                   <button onClick={handleLogout} className="w-full flex items-center space-x-2 px-3 py-3 bg-red-50 text-red-600 rounded-xl font-medium">
                     <LogOut size={18} /><span>Sign Out</span>
                   </button>

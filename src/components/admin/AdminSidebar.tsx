@@ -22,10 +22,7 @@ const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/products', label: 'Produk', icon: Package },
   { href: '/admin/categories', label: 'Kategori', icon: Tag },
-  { href: '/admin/orders', label: 'Pesanan', icon: ShoppingBag },
-  { href: '/admin/payments', label: 'Verifikasi Bayar', icon: CreditCard },
   { href: '/admin/cms', label: 'CMS Landing Page', icon: FileEdit },
-  { href: '/admin/users', label: 'Pengguna', icon: Users },
 ];
 
 export default function AdminSidebar() {

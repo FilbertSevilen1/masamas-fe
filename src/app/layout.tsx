@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
+import WhatsAppFloatingButton from "@/components/common/WhatsAppFloatingButton";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
     default: 'Masamas - Material Bangunan Berkualitas Tinggi',
     template: '%s | Masamas',
   },
-  description: 'Masamas menyediakan material bangunan berkualitas tinggi untuk proyek konstruksi industri dan residensial. Semen, baja, batu bata, atap, dan lebih dari 500 produk tersedia.',
+  description: 'Masamas menyediakan material bangunan berkualitas tinggi untuk proyek konstruksi industri and residensial. Semen, baja, batu bata, atap, dan lebih dari 500 produk tersedia.',
   keywords: ['material bangunan', 'toko bangunan', 'semen', 'baja tulangan', 'bata', 'atap', 'konstruksi', 'masamas', 'jakarta'],
   authors: [{ name: 'Masamas Store' }],
   creator: 'Masamas Store',
@@ -54,7 +55,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
-      <body className="min-h-screen flex flex-col antialiased">{children}</body>
+      <body className="min-h-screen flex flex-col antialiased">
+        {children}
+        <WhatsAppFloatingButton />
+      </body>
     </html>
   );
 }
+
