@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 // Server-side metadata generation for SEO on product detail pages
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
+    const resolvedParams = await params;
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5005/api'}/products/${params.slug}`,
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5005/api'}/products/${resolvedParams.slug}`,
       { next: { revalidate: 3600 } }
     );
 

@@ -71,7 +71,7 @@ export default function ProductDetailPage() {
 
   const cleanNum = whatsapp.replace(/[^0-9]/g, '');
   const waNumber = cleanNum.startsWith('0') ? `62${cleanNum.slice(1)}` : cleanNum;
-  const waLink = `https://wa.me/${waNumber}?text=${encodeURIComponent(`Halo Admin Masamas, saya tertarik untuk memesan produk:\n\n*Nama Produk*: ${product.name}\n*Jumlah*: ${qty} unit\n*Harga*: Rp ${Number(product.price).toLocaleString('id-ID')}\n\nApakah barang tersebut tersedia? Mohon informasinya.`)}`;
+  const waLink = `https://wa.me/${waNumber}?text=${encodeURIComponent(`Halo Admin Masamas, saya tertarik untuk memesan produk:\n\n*Nama Produk*: ${product.name}\n*Harga*: Rp ${Number(product.price).toLocaleString('id-ID')}\n\nApakah barang tersebut tersedia? Mohon informasinya.`)}`;
 
   return (
     <main className="min-h-screen flex flex-col bg-gray-50">
@@ -132,17 +132,8 @@ export default function ProductDetailPage() {
 
             <p className="text-gray-600 leading-relaxed mb-8 whitespace-pre-line">{product.description}</p>
 
-            {/* Quantity + Order via WhatsApp */}
+            {/* Order via WhatsApp */}
             <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white">
-                <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-3 hover:bg-gray-100 transition">
-                  <Minus size={16} />
-                </button>
-                <span className="px-5 font-bold text-charcoal text-lg">{qty}</span>
-                <button onClick={() => setQty(qty + 1)} className="px-4 py-3 hover:bg-gray-100 transition">
-                  <Plus size={16} />
-                </button>
-              </div>
               <a
                 href={waLink}
                 target="_blank"
