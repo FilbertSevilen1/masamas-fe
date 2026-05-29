@@ -107,7 +107,7 @@ const Navbar = () => {
                 }}
                 className="flex items-center gap-1 text-charcoal hover:text-primary font-medium transition-colors py-6"
               >
-                <span>Products</span>
+                <span>Produk</span>
                 <ChevronDown size={14} className={`transition-transform ${prodDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
               {prodDropdownOpen && (
@@ -116,7 +116,7 @@ const Navbar = () => {
                   className="absolute left-0 mt-[-10px] w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in slide-in-from-top-2 duration-150"
                 >
                   <div className="px-4 py-1 text-xs font-semibold text-gray-400 border-b border-gray-50 pb-2 mb-1">
-                    Featured Products
+                    Produk Unggulan
                   </div>
                   {products.length > 0 ? (
                     products.map((p) => (
@@ -135,7 +135,7 @@ const Navbar = () => {
                       </Link>
                     ))
                   ) : (
-                    <div className="px-4 py-2 text-sm text-gray-400 italic">No products found</div>
+                    <div className="px-4 py-2 text-sm text-gray-400 italic">Produk tidak ditemukan</div>
                   )}
                   <div className="border-t border-gray-50 mt-1 pt-1">
                     <Link
@@ -143,7 +143,7 @@ const Navbar = () => {
                       onClick={() => setProdDropdownOpen(false)}
                       className="block text-center text-xs font-bold text-primary hover:text-orange-600 py-2 transition"
                     >
-                      Lihat Lainnya
+                      Lihat Semua Produk
                     </Link>
                   </div>
                 </div>
@@ -163,7 +163,7 @@ const Navbar = () => {
                 }}
                 className="flex items-center gap-1 text-charcoal hover:text-primary font-medium transition-colors py-6"
               >
-                <span>Categories</span>
+                <span>Kategori</span>
                 <ChevronDown size={14} className={`transition-transform ${catDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
               {catDropdownOpen && (
@@ -172,7 +172,7 @@ const Navbar = () => {
                   className="absolute left-0 mt-[-10px] w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in slide-in-from-top-2 duration-150"
                 >
                   <div className="px-4 py-1 text-xs font-semibold text-gray-400 border-b border-gray-50 pb-2 mb-1">
-                    Product Categories
+                    Kategori Produk
                   </div>
                   {categories.length > 0 ? (
                     categories.map((c) => (
@@ -186,7 +186,7 @@ const Navbar = () => {
                       </Link>
                     ))
                   ) : (
-                    <div className="px-4 py-2 text-sm text-gray-400 italic">No categories found</div>
+                    <div className="px-4 py-2 text-sm text-gray-400 italic">Kategori tidak ditemukan</div>
                   )}
                   <div className="border-t border-gray-50 mt-1 pt-1">
                     <Link
@@ -194,16 +194,16 @@ const Navbar = () => {
                       onClick={() => setCatDropdownOpen(false)}
                       className="block text-center text-xs font-bold text-primary hover:text-orange-600 py-2 transition"
                     >
-                      Lihat Lainnya
+                      Lihat Semua Kategori
                     </Link>
                   </div>
                 </div>
               )}
             </div>
 
-            <Link href="/#gallery" className="text-charcoal hover:text-primary font-medium transition-colors">Gallery</Link>
-            <Link href="/about" className="text-charcoal hover:text-primary font-medium transition-colors">About</Link>
-            <Link href="/contact" className="text-charcoal hover:text-primary font-medium transition-colors">Contact</Link>
+            <Link href="/gallery" className="text-charcoal hover:text-primary font-medium transition-colors">Galeri</Link>
+            <Link href="/about" className="text-charcoal hover:text-primary font-medium transition-colors">Tentang Kami</Link>
+            <Link href="/contact" className="text-charcoal hover:text-primary font-medium transition-colors">Kontak</Link>
           </div>
 
           {/* Icons */}
@@ -227,7 +227,7 @@ const Navbar = () => {
                         onClick={() => setDropdownOpen(false)}
                       >
                         <ShieldCheck size={16} />
-                        <span>Admin Panel</span>
+                        <span>Panel Admin</span>
                       </Link>
                     )}
                     <button
@@ -235,7 +235,7 @@ const Navbar = () => {
                       className="w-full flex items-center space-x-2 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
                     >
                       <LogOut size={16} />
-                      <span>Sign Out</span>
+                      <span>Keluar</span>
                     </button>
                   </div>
                 )}
@@ -243,10 +243,10 @@ const Navbar = () => {
             ) : (
               <div className="flex items-center space-x-3">
                 <Link href="/login" className="px-4 py-2 text-charcoal font-medium hover:text-primary transition-colors">
-                  Sign In
+                  Masuk
                 </Link>
                 <Link href="/register" className="flex items-center space-x-1 px-4 py-2 bg-primary text-white rounded-xl hover:bg-orange-600 transition font-bold shadow-lg shadow-primary/30">
-                  <span>Get Started</span>
+                  <span>Daftar</span>
                 </Link>
               </div>
             )}
@@ -271,7 +271,7 @@ const Navbar = () => {
                 onClick={() => setMobileProdOpen(!mobileProdOpen)}
                 className="w-full flex justify-between items-center px-3 py-4 font-medium text-charcoal hover:bg-gray-50 border-b border-gray-50 rounded-lg text-left"
               >
-                <span>Products</span>
+                <span>Produk</span>
                 <ChevronDown size={18} className={`transition-transform ${mobileProdOpen ? 'rotate-180' : ''}`} />
               </button>
               {mobileProdOpen && (
@@ -291,7 +291,7 @@ const Navbar = () => {
                     onClick={() => { setIsOpen(false); setMobileProdOpen(false); }}
                     className="block py-2.5 px-3 text-sm text-primary font-bold"
                   >
-                    Lihat Lainnya
+                    Lihat Semua Produk
                   </Link>
                 </div>
               )}
@@ -303,7 +303,7 @@ const Navbar = () => {
                 onClick={() => setMobileCatOpen(!mobileCatOpen)}
                 className="w-full flex justify-between items-center px-3 py-4 font-medium text-charcoal hover:bg-gray-50 border-b border-gray-50 rounded-lg text-left"
               >
-                <span>Categories</span>
+                <span>Kategori</span>
                 <ChevronDown size={18} className={`transition-transform ${mobileCatOpen ? 'rotate-180' : ''}`} />
               </button>
               {mobileCatOpen && (
@@ -323,32 +323,32 @@ const Navbar = () => {
                     onClick={() => { setIsOpen(false); setMobileCatOpen(false); }}
                     className="block py-2.5 px-3 text-sm text-primary font-bold"
                   >
-                    Lihat Lainnya
+                    Lihat Semua Kategori
                   </Link>
                 </div>
               )}
             </div>
 
-            <Link href="/#gallery" onClick={() => setIsOpen(false)} className="block px-3 py-4 font-medium text-charcoal hover:bg-gray-50 border-b border-gray-50 rounded-lg">Gallery</Link>
-            <Link href="/about" onClick={() => setIsOpen(false)} className="block px-3 py-4 font-medium text-charcoal hover:bg-gray-50 border-b border-gray-50 rounded-lg">About</Link>
-            <Link href="/contact" onClick={() => setIsOpen(false)} className="block px-3 py-4 font-medium text-charcoal hover:bg-gray-50 rounded-lg">Contact</Link>
+            <Link href="/gallery" onClick={() => setIsOpen(false)} className="block px-3 py-4 font-medium text-charcoal hover:bg-gray-50 border-b border-gray-50 rounded-lg">Galeri</Link>
+            <Link href="/about" onClick={() => setIsOpen(false)} className="block px-3 py-4 font-medium text-charcoal hover:bg-gray-50 border-b border-gray-50 rounded-lg">Tentang Kami</Link>
+            <Link href="/contact" onClick={() => setIsOpen(false)} className="block px-3 py-4 font-medium text-charcoal rounded-lg">Kontak</Link>
 
             <div className="pt-4 border-t border-gray-100 space-y-2">
               {isLoggedIn ? (
                 <>
                   {isAdmin && (
                     <Link href="/admin" onClick={() => setIsOpen(false)} className="flex items-center space-x-2 px-3 py-3 bg-charcoal text-white rounded-xl font-medium">
-                      <ShieldCheck size={18} /><span>Admin Panel</span>
+                      <ShieldCheck size={18} /><span>Panel Admin</span>
                     </Link>
                   )}
                   <button onClick={handleLogout} className="w-full flex items-center space-x-2 px-3 py-3 bg-red-50 text-red-600 rounded-xl font-medium">
-                    <LogOut size={18} /><span>Sign Out</span>
+                    <LogOut size={18} /><span>Keluar</span>
                   </button>
                 </>
               ) : (
                 <div className="flex gap-3">
-                  <Link href="/login" onClick={() => setIsOpen(false)} className="flex-1 text-center px-4 py-3 bg-gray-100 text-charcoal rounded-xl font-medium">Sign In</Link>
-                  <Link href="/register" onClick={() => setIsOpen(false)} className="flex-1 text-center px-4 py-3 bg-primary text-white rounded-xl font-bold">Register</Link>
+                  <Link href="/login" onClick={() => setIsOpen(false)} className="flex-1 text-center px-4 py-3 bg-gray-100 text-charcoal rounded-xl font-medium">Masuk</Link>
+                  <Link href="/register" onClick={() => setIsOpen(false)} className="flex-1 text-center px-4 py-3 bg-primary text-white rounded-xl font-bold">Daftar</Link>
                 </div>
               )}
             </div>

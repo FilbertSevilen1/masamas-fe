@@ -1,12 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import api from '@/lib/api';
-import { ArrowRight, Award, Truck, Users, Phone } from 'lucide-react';
+import { ArrowRight, Award, Truck, Users, Phone, Mail, MapPin, MessageCircle } from 'lucide-react';
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useInView,
+  useMotionValue,
+  useSpring,
+} from 'framer-motion';
 
+// ── Interfaces ────────────────────────────────────────────────────────────────
 interface CmsMap {
   hero_title?: string; hero_subtitle?: string; hero_cta_text?: string;
   hero_badge_1?: string; hero_badge_2?: string; hero_badge_3?: string;
@@ -29,6 +38,102 @@ interface Product {
   category: { name: string };
 }
 
+// ── Animation Variants ────────────────────────────────────────────────────────
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 45 },
+  visible: (delay = 0) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.75, ease: EASE, delay },
+  }),
+};
+
+const fadeLeft = {
+  hidden: { opacity: 0, x: -55 },
+  visible: (delay = 0) => ({
+    opacity: 1, x: 0,
+    transition: { duration: 0.75, ease: EASE, delay },
+  }),
+};
+
+const fadeRight = {
+  hidden: { opacity: 0, x: 55 },
+  visible: (delay = 0) => ({
+    opacity: 1, x: 0,
+    transition: { duration: 0.75, ease: EASE, delay },
+  }),
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.88 },
+  visible: (delay = 0) => ({
+    opacity: 1, scale: 1,
+    transition: { duration: 0.65, ease: EASE, delay },
+  }),
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } },
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 32 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: EASE } },
+};
+
+// ── CountUp Component ─────────────────────────────────────────────────────────
+function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true });
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!isInView) return;
+    let current = 0;
+    const steps = 60;
+    const increment = target / steps;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= target) { setCount(target); clearInterval(timer); }
+      else setCount(Math.floor(current));
+    }, 1800 / steps);
+    return () => clearInterval(timer);
+  }, [isInView, target]);
+
+  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
+}
+
+// ── TiltCard Component ────────────────────────────────────────────────────────
+function TiltCard({ children, className }: { children: React.ReactNode; className?: string }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const xVal = useMotionValue(0);
+  const yVal = useMotionValue(0);
+  const rotateX = useSpring(useTransform(yVal, [-0.5, 0.5], [6, -6]), { stiffness: 400, damping: 40 });
+  const rotateY = useSpring(useTransform(xVal, [-0.5, 0.5], [-6, 6]), { stiffness: 400, damping: 40 });
+  const scale = useSpring(1, { stiffness: 400, damping: 40 });
+
+  return (
+    <motion.div
+      ref={cardRef}
+      style={{ rotateX, rotateY, scale, transformPerspective: 800 }}
+      onMouseMove={(e) => {
+        const rect = cardRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        xVal.set((e.clientX - rect.left) / rect.width - 0.5);
+        yVal.set((e.clientY - rect.top) / rect.height - 0.5);
+        scale.set(1.04);
+      }}
+      onMouseLeave={() => { xVal.set(0); yVal.set(0); scale.set(1); }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [cms, setCms] = useState<CmsMap>({});
   const [categories, setCategories] = useState<Category[]>([]);
@@ -36,8 +141,30 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [whatsapp, setWhatsapp] = useState('');
-
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Scroll-trigger refs
+  const heroRef = useRef<HTMLElement>(null);
+  const categoriesRef = useRef<HTMLDivElement>(null);
+  const productsRef = useRef<HTMLDivElement>(null);
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const whyRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
+
+  // Hero parallax
+  const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
+  const heroParallaxY = useTransform(heroScroll, [0, 1], ['0%', '28%']);
+
+  // Gallery parallax
+  const { scrollYProgress: galleryScroll } = useScroll({ target: galleryRef, offset: ['start end', 'end start'] });
+  const galleryBgY = useTransform(galleryScroll, [0, 1], ['-4%', '4%']);
+
+  // InView flags
+  const categoriesInView = useInView(categoriesRef, { once: true, margin: '-80px' as `${number}px` });
+  const productsInView   = useInView(productsRef,   { once: true, margin: '-80px' as `${number}px` });
+  const galleryInView    = useInView(galleryRef,    { once: true, margin: '-80px' as `${number}px` });
+  const whyInView        = useInView(whyRef,        { once: true, margin: '-80px' as `${number}px` });
+  const ctaInView        = useInView(ctaRef,        { once: true, margin: '-80px' as `${number}px` });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -53,7 +180,7 @@ export default function HomePage() {
     ]).finally(() => setLoading(false));
   }, []);
 
-  // Autoplay Carousel
+  // Autoplay carousel
   useEffect(() => {
     if (loading) return;
     const interval = setInterval(() => {
@@ -97,85 +224,199 @@ export default function HomePage() {
 
   const renderActionButton = (action: string, text: string) => {
     const isExternal = action.startsWith('http://') || action.startsWith('https://');
-    const className = "flex items-center justify-center gap-2 px-8 py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition shadow-xl shadow-primary/30 text-lg hover:scale-105 duration-200";
+    const cls = "flex items-center justify-center gap-2 px-8 py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition shadow-xl shadow-primary/30 text-lg hover:scale-105 duration-200";
     if (isExternal) {
-      return (
-        <a href={action} target="_blank" rel="noopener noreferrer" className={className}>
-          {text} <ArrowRight size={20} />
-        </a>
-      );
+      return <a href={action} target="_blank" rel="noopener noreferrer" className={cls}>{text} <ArrowRight size={20} /></a>;
     }
-    return (
-      <Link href={action} className={className}>
-        {text} <ArrowRight size={20} />
-      </Link>
-    );
+    return <Link href={action} className={cls}>{text} <ArrowRight size={20} /></Link>;
   };
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen flex flex-col overflow-x-hidden">
       <Navbar />
 
-      {/* ── HERO CAROUSEL ── */}
-      <section className="bg-charcoal text-white h-[85vh] relative overflow-hidden flex items-center">
-        {carouselSlides.map((slide, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-          >
-            {/* Background Image */}
-            <div className="absolute inset-0">
-              <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-r from-charcoal via-charcoal/80 to-transparent" />
-            </div>
+      {/* ══════════════════════════════════════════════
+          HERO CAROUSEL — parallax background
+      ══════════════════════════════════════════════ */}
+      <section ref={heroRef} className="bg-charcoal text-white relative flex flex-col">
+        <div className="relative h-[81vh] flex items-center overflow-hidden">
+          {carouselSlides.map((slide, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+            >
+              {/* Parallax Background */}
+              <motion.div style={{ y: heroParallaxY }} className="absolute inset-0 scale-110">
+                <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-r from-charcoal via-charcoal/80 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 via-transparent to-transparent" />
+              </motion.div>
 
-            {/* Slide Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center relative z-20">
-              <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 bg-primary/20 border border-primary/30 text-primary px-4 py-2 rounded-full text-sm font-bold mb-6 uppercase tracking-widest">
-                  🏗️ Material Bangunan Terpercaya
-                </div>
-                <h1 className="text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-                  {slide.title}
-                </h1>
-                <p className="text-gray-300 text-lg leading-relaxed mb-10 max-w-lg">
-                  {slide.desc}
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  {renderActionButton(slide.action, cms.hero_cta_text || 'Lihat Produk Kami')}
-                  <Link href="/about" className="flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition border border-white/20 text-lg">
-                    Pelajari Lebih Lanjut
-                  </Link>
+              {/* Slide content — staggered text reveal */}
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center relative z-20">
+                <div className="max-w-2xl">
+                  <motion.div
+                    animate={index === currentSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+                    className="inline-flex items-center gap-2 bg-primary/20 border border-primary/30 text-primary px-4 py-2 rounded-full text-sm font-bold mb-6 uppercase tracking-widest"
+                  >
+                    🏗️ Material Bangunan Terpercaya
+                  </motion.div>
+                  <motion.h1
+                    animate={index === currentSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 35 }}
+                    transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.22 }}
+                    className="text-5xl lg:text-6xl font-extrabold leading-tight mb-6"
+                  >
+                    {slide.title}
+                  </motion.h1>
+                  <motion.p
+                    animate={index === currentSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 25 }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.38 }}
+                    className="text-gray-300 text-lg leading-relaxed mb-8 max-w-lg"
+                  >
+                    {slide.desc}
+                  </motion.p>
+                  <motion.div
+                    animate={index === currentSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.52 }}
+                    className="flex flex-col sm:flex-row gap-4"
+                  >
+                    {renderActionButton(slide.action, cms.hero_cta_text || 'Lihat Produk Kami')}
+                    <Link href="/about" className="flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition border border-white/20 text-lg">
+                      Pelajari Lebih Lanjut
+                    </Link>
+                  </motion.div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-
-        {/* Carousel Pagination dots */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex space-x-3 z-30">
-          {carouselSlides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentSlide(i)}
-              className={`w-3.5 h-3.5 rounded-full transition-all duration-300 ${i === currentSlide ? 'bg-primary w-8' : 'bg-white/40 hover:bg-white/70'}`}
-            />
           ))}
+
+          {/* Pagination dots (Vertical on the right) */}
+          <div className="absolute right-6 sm:right-8 top-1/2 -translate-y-1/2 flex flex-col space-y-3 z-30">
+            {carouselSlides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentSlide(i)}
+                className={`w-2.5 transition-all duration-300 rounded-full cursor-pointer ${i === currentSlide ? 'bg-primary h-8' : 'h-2.5 bg-white/40 hover:bg-white/70'}`}
+              />
+            ))}
+          </div>
         </div>
+
       </section>
 
-      {/* ── SHOP BY CATEGORY ── */}
-      <section className="py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-12">
-            <div>
-              <p className="text-primary font-bold uppercase tracking-widest text-sm mb-2">Koleksi Kami</p>
-              <h2 className="text-4xl font-bold text-charcoal">Belanja per Kategori</h2>
-              <div className="w-20 h-1.5 bg-primary mt-3 rounded-full" />
-            </div>
-            <Link href="/products" className="hidden sm:flex items-center gap-2 text-primary font-bold hover:underline">
-              Semua Produk <ArrowRight size={18} />
-            </Link>
+      {/* ══════════════════════════════════════════════
+          SHOP BY CATEGORY — stagger + 3D tilt
+      ══════════════════════════════════════════════ */}
+      <section className="bg-gray-50 pt-1 relative">
+        {/* ── QUICK CONTACT FLOATING CARDS ── */}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-30 -mt-16 md:-mt-20 mb-8 md:mb-12">
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* WhatsApp */}
+            <motion.a
+              href={`https://wa.me/${waNumber}`}
+              target="_blank" rel="noopener noreferrer"
+              id="hero-contact-whatsapp"
+              variants={staggerItem}
+              whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.2 } }}
+              className="flex items-center gap-4 p-6 bg-white/95 backdrop-blur-md rounded-2xl border border-gray-100 shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer"
+            >
+              <div className="w-12 h-12 rounded-xl bg-[#25D366]/10 flex items-center justify-center shrink-0 group-hover:bg-[#25D366]/20 transition-colors">
+                <svg viewBox="0 0 24 24" width={22} height={22} fill="currentColor" className="text-[#25D366]">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.458 5.705 1.459h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">WhatsApp</p>
+                <p className="text-charcoal font-bold text-sm truncate group-hover:text-[#25D366] transition-colors">{whatsapp || '+62 812 3456 7890'}</p>
+                <p className="text-gray-400 text-xs mt-0.5">Respon Cepat</p>
+              </div>
+            </motion.a>
+
+            {/* Phone */}
+            <motion.a
+              href={`tel:${(cms.footer_phone || '+622112345678').replace(/\s+/g, '')}`}
+              id="hero-contact-phone"
+              variants={staggerItem}
+              whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.2 } }}
+              className="flex items-center gap-4 p-6 bg-white/95 backdrop-blur-md rounded-2xl border border-gray-100 shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer"
+            >
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                <Phone size={22} className="text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Telepon</p>
+                <p className="text-charcoal font-bold text-sm truncate group-hover:text-primary transition-colors">{cms.footer_phone || '+62 21 1234 5678'}</p>
+                <p className="text-gray-400 text-xs mt-0.5">Senin–Sabtu 08.00–17.00</p>
+              </div>
+            </motion.a>
+
+            {/* Email */}
+            <motion.a
+              href={`mailto:${cms.footer_email || 'info@masamas.co.id'}`}
+              id="hero-contact-email"
+              variants={staggerItem}
+              whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.2 } }}
+              className="flex items-center gap-4 p-6 bg-white/95 backdrop-blur-md rounded-2xl border border-gray-100 shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer"
+            >
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 group-hover:bg-blue-500/20 transition-colors">
+                <Mail size={22} className="text-blue-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Email</p>
+                <p className="text-charcoal font-bold text-sm truncate group-hover:text-blue-500 transition-colors">{cms.footer_email || 'info@masamas.co.id'}</p>
+                <p className="text-gray-400 text-xs mt-0.5">Balas dalam 1×24 jam</p>
+              </div>
+            </motion.a>
+
+            {/* Address */}
+            <motion.div
+              variants={staggerItem}
+              whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.2 } }}
+              className="rounded-2xl border border-gray-100 shadow-xl hover:shadow-2xl transition-all duration-300 bg-white/95 backdrop-blur-md group"
+            >
+              <Link href="/contact" id="hero-contact-address" className="flex items-center gap-4 p-6 group h-full">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0 group-hover:bg-amber-500/20 transition-colors">
+                  <MapPin size={22} className="text-amber-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Kantor Kami</p>
+                  <p className="text-charcoal font-bold text-sm truncate group-hover:text-amber-400 transition-colors">{cms.footer_address || 'Jl. Industri Raya No. 45, Jakarta'}</p>
+                  <p className="text-gray-400 text-xs mt-0.5 flex items-center gap-1">Lihat detail kontak <MessageCircle size={10} /></p>
+                </div>
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 pt-10">
+
+          {/* Section header */}
+          <div ref={categoriesRef}>
+            <motion.div
+              variants={fadeUp} custom={0}
+              initial="hidden" animate={categoriesInView ? 'visible' : 'hidden'}
+              className="flex justify-between items-end mb-12"
+            >
+              <div>
+                <p className="text-primary font-bold uppercase tracking-widest text-sm mb-2">Koleksi Kami</p>
+                <h2 className="text-4xl font-bold text-charcoal">Belanja per Kategori</h2>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={categoriesInView ? { width: 80 } : { width: 0 }}
+                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.35 }}
+                  className="h-1.5 bg-primary mt-3 rounded-full"
+                />
+              </div>
+              <Link href="/products" className="hidden sm:flex items-center gap-2 text-primary font-bold hover:underline">
+                Semua Produk <ArrowRight size={18} />
+              </Link>
+            </motion.div>
           </div>
 
           {loading ? (
@@ -185,46 +426,69 @@ export default function HomePage() {
           ) : categories.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <p className="text-xl font-semibold">Belum ada kategori</p>
-              {isAdmin && (
-                <Link href="/admin/categories" className="text-primary hover:underline mt-2 block text-sm">Tambah kategori di Admin</Link>
-              )}
+              {isAdmin && <Link href="/admin/categories" className="text-primary hover:underline mt-2 block text-sm">Tambah kategori di Admin</Link>}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            <motion.div
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6"
+              variants={staggerContainer}
+              initial="hidden"
+              animate={categoriesInView ? 'visible' : 'hidden'}
+            >
               {categories.map(cat => (
-                <Link key={cat.id} href={`/products?category=${cat.slug}`} className="group relative rounded-2xl overflow-hidden aspect-square bg-charcoal shadow-sm hover:shadow-xl transition-all duration-300">
-                  {cat.image ? (
-                    <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-60" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-charcoal to-charcoal-light flex items-center justify-center text-6xl">🏗️</div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-5">
-                    <h3 className="text-white font-bold text-lg leading-tight">{cat.name}</h3>
-                    <p className="text-gray-300 text-sm mt-1">{cat._count.products} Produk</p>
-                  </div>
-                  <div className="absolute top-4 right-4 w-8 h-8 bg-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                    <ArrowRight size={16} className="text-white" />
-                  </div>
-                </Link>
+                <motion.div key={cat.id} variants={staggerItem}>
+                  <TiltCard className="group relative rounded-2xl overflow-hidden aspect-square bg-charcoal shadow-sm hover:shadow-xl transition-shadow duration-300">
+                    <Link href={`/products?category=${cat.slug}`} className="block w-full h-full">
+                      {cat.image ? (
+                        <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-60" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-charcoal to-charcoal-light flex items-center justify-center text-6xl">🏗️</div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-5">
+                        <h3 className="text-white font-bold text-lg leading-tight">{cat.name}</h3>
+                        <p className="text-gray-300 text-sm mt-1">{cat._count.products} Produk</p>
+                      </div>
+                      <div className="absolute top-4 right-4 w-8 h-8 bg-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                        <ArrowRight size={16} className="text-white" />
+                      </div>
+                    </Link>
+                  </TiltCard>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
         </div>
       </section>
 
-      {/* ── FEATURED PRODUCTS ── */}
-      <section className="py-24 bg-white">
+      {/* ══════════════════════════════════════════════
+          FEATURED PRODUCTS — cascade reveal
+      ══════════════════════════════════════════════ */}
+      <section className="py-24 bg-white relative">
+        {/* Diagonal top edge */}
+        <div className="absolute top-0 left-0 right-0 h-14 bg-gray-50" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 0)' }} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-12">
-            <div>
-              <p className="text-primary font-bold uppercase tracking-widest text-sm mb-2">Pilihan Terbaik</p>
-              <h2 className="text-4xl font-bold text-charcoal">Produk Unggulan</h2>
-              <div className="w-20 h-1.5 bg-primary mt-3 rounded-full" />
-            </div>
-            <Link href="/products" className="hidden sm:flex items-center gap-2 text-primary font-bold hover:underline">
-              Lihat Semua <ArrowRight size={18} />
-            </Link>
+
+          <div ref={productsRef}>
+            <motion.div
+              variants={fadeUp} custom={0}
+              initial="hidden" animate={productsInView ? 'visible' : 'hidden'}
+              className="flex justify-between items-end mb-12"
+            >
+              <div>
+                <p className="text-primary font-bold uppercase tracking-widest text-sm mb-2">Pilihan Terbaik</p>
+                <h2 className="text-4xl font-bold text-charcoal">Produk Unggulan</h2>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={productsInView ? { width: 80 } : { width: 0 }}
+                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.35 }}
+                  className="h-1.5 bg-primary mt-3 rounded-full"
+                />
+              </div>
+              <Link href="/products" className="hidden sm:flex items-center gap-2 text-primary font-bold hover:underline">
+                Lihat Semua <ArrowRight size={18} />
+              </Link>
+            </motion.div>
           </div>
 
           {loading ? (
@@ -234,17 +498,19 @@ export default function HomePage() {
           ) : products.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <p className="text-xl font-semibold">Belum ada produk</p>
-              {isAdmin && (
-                <Link href="/admin/products" className="text-primary hover:underline mt-2 block text-sm">Tambah produk di Admin</Link>
-              )}
+              {isAdmin && <Link href="/admin/products" className="text-primary hover:underline mt-2 block text-sm">Tambah produk di Admin</Link>}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            <motion.div
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6"
+              variants={staggerContainer}
+              initial="hidden"
+              animate={productsInView ? 'visible' : 'hidden'}
+            >
               {products.map(product => {
                 const waLink = `https://wa.me/${waNumber}?text=${encodeURIComponent(`Halo Admin Masamas, saya tertarik untuk memesan produk:\n\n*Nama Produk*: ${product.name}\n*Harga*: Rp ${Number(product.price).toLocaleString('id-ID')}\n\nApakah barang tersebut tersedia? Mohon informasinya.`)}`;
-
                 return (
-                  <div key={product.id} className="card-premium group flex flex-col justify-between h-full bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition duration-300">
+                  <motion.div key={product.id} variants={staggerItem} className="card-premium group flex flex-col justify-between h-full bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition duration-300">
                     <div>
                       <Link href={`/products/${product.slug}`}>
                         <div className="aspect-square bg-gray-100 relative overflow-hidden">
@@ -267,70 +533,165 @@ export default function HomePage() {
                         </div>
                       </div>
                     </div>
-
                     <div className="p-4 pt-0 space-y-2">
                       <a
                         href={waLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl text-xs font-bold transition shadow-sm"
+                        target="_blank" rel="noopener noreferrer"
+                        className="relative w-full flex items-center justify-center gap-1.5 py-2.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl text-xs font-bold transition shadow-sm overflow-hidden group/wa"
                       >
-                        <svg viewBox="0 0 24 24" width={14} height={14} fill="currentColor">
+                        {/* Pulse ring on hover */}
+                        <span className="absolute inset-0 bg-[#25D366] rounded-xl opacity-0 group-hover/wa:opacity-100 animate-ping-slow" />
+                        <svg viewBox="0 0 24 24" width={14} height={14} fill="currentColor" className="relative z-10">
                           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.458 5.705 1.459h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                         </svg>
-                        Beli via WhatsApp
+                        <span className="relative z-10">Beli via WhatsApp</span>
                       </a>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
         </div>
       </section>
 
-      {/* ── GALLERY SECTION ── */}
-      <section id="gallery" className="py-24 bg-gray-50 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+      {/* ══════════════════════════════════════════════
+          GALLERY — zoom-from-center + parallax drift
+      ══════════════════════════════════════════════ */}
+      <section id="gallery" className="py-24 bg-gray-50 scroll-mt-20 relative overflow-hidden">
+        {/* Subtle parallax tinted overlay */}
+        <motion.div
+          style={{ y: galleryBgY }}
+          className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.03] to-transparent pointer-events-none"
+        />
+        <div ref={galleryRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+
+          <motion.div
+            variants={fadeUp} custom={0}
+            initial="hidden" animate={galleryInView ? 'visible' : 'hidden'}
+            className="text-center mb-16"
+          >
             <p className="text-primary font-bold uppercase tracking-widest text-sm mb-2">Galeri Proyek</p>
             <h2 className="text-4xl font-bold text-charcoal">Dokumentasi Portofolio Proyek</h2>
-            <div className="w-20 h-1.5 bg-primary mt-3 mx-auto rounded-full" />
+            <motion.div
+              initial={{ width: 0 }}
+              animate={galleryInView ? { width: 80 } : { width: 0 }}
+              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.35 }}
+              className="h-1.5 bg-primary mt-3 mx-auto rounded-full"
+            />
             <p className="text-gray-500 mt-4 max-w-xl mx-auto text-sm">Berbagai dokumentasi proyek residensial dan industrial yang dibangun menggunakan material berkualitas dari Masamas.</p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {galleryItems.map((item, i) => (
-              <div key={i} className="group relative rounded-2xl overflow-hidden aspect-video shadow-md hover:shadow-xl transition-all duration-300 bg-charcoal">
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+            variants={staggerContainer}
+            initial="hidden"
+            animate={galleryInView ? 'visible' : 'hidden'}
+          >
+            {galleryItems.slice(0, 3).map((item, i) => (
+              <motion.div
+                key={i}
+                variants={scaleIn}
+                custom={i * 0.05}
+                className="group relative rounded-2xl overflow-hidden aspect-video shadow-md hover:shadow-xl transition-all duration-300 bg-charcoal"
+                whileHover={{ y: -4 }}
+                transition={{ duration: 0.3 }}
+              >
                 <img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80"
+                  src={item.image} alt={item.title}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                   <h3 className="text-white font-bold text-lg drop-shadow-md">{item.title}</h3>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
+
+          <motion.div
+            variants={fadeUp}
+            custom={0.2}
+            initial="hidden"
+            animate={galleryInView ? 'visible' : 'hidden'}
+            className="text-center mt-12"
+          >
+            <Link
+              href="/gallery"
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition shadow-lg shadow-primary/20 text-sm hover:scale-105 duration-200"
+            >
+              Lihat Galeri Selengkapnya <ArrowRight size={16} />
+            </Link>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── WHY MASAMAS ── */}
-      <section className="py-24 bg-charcoal text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <p className="text-primary font-bold uppercase tracking-widest text-sm mb-3">Keunggulan Kami</p>
-            <h2 className="text-4xl font-bold">{cms.about_title || 'Mengapa Profesional Mempercayai Masamas?'}</h2>
+      {/* ══════════════════════════════════════════════
+          WHY MASAMAS — alt slide-in + stat counters
+      ══════════════════════════════════════════════ */}
+      <section className="py-24 bg-charcoal text-white relative overflow-hidden">
+        {/* Dot grid overlay */}
+        <div className="absolute inset-0 opacity-[0.045]" style={{
+          backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+          backgroundSize: '32px 32px'
+        }} />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div ref={whyRef}>
+            <motion.div
+              variants={fadeUp} custom={0}
+              initial="hidden" animate={whyInView ? 'visible' : 'hidden'}
+              className="text-center mb-12"
+            >
+              <p className="text-primary font-bold uppercase tracking-widest text-sm mb-3">Keunggulan Kami</p>
+              <h2 className="text-4xl font-bold">{cms.about_title || 'Mengapa Profesional Mempercayai Masamas?'}</h2>
+            </motion.div>
           </div>
+
+          {/* Stat counters */}
+          <motion.div
+            className="grid grid-cols-3 gap-6 mb-16"
+            variants={staggerContainer}
+            initial="hidden"
+            animate={whyInView ? 'visible' : 'hidden'}
+          >
+            {[
+              { value: 12,   suffix: '+', label: 'Tahun Berpengalaman' },
+              { value: 5000, suffix: '+', label: 'Proyek Selesai' },
+              { value: 99,   suffix: '%', label: 'Tingkat Kepuasan' },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                variants={staggerItem}
+                whileHover={{ scale: 1.04, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                transition={{ duration: 0.25 }}
+                className="text-center p-6 bg-white/5 rounded-2xl border border-white/10 cursor-default"
+              >
+                <p className="text-4xl lg:text-5xl font-extrabold text-primary">
+                  <CountUp target={stat.value} suffix={stat.suffix} />
+                </p>
+                <p className="text-gray-400 mt-2 text-sm font-medium">{stat.label}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Feature cards — alt slide-in */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { icon: Award, title: cms.about_point_1_title || 'Kualitas Bersertifikat', desc: cms.about_point_1_desc || 'Setiap material melewati pemeriksaan kualitas ketat sesuai standar SNI.' },
-              { icon: Users, title: cms.about_point_2_title || 'Konsultasi Proyek', desc: cms.about_point_2_desc || 'Tim ahli kami siap membantu menghitung kebutuhan material Anda.' },
-              { icon: Truck, title: cms.about_point_3_title || 'Pengiriman Massal', desc: cms.about_point_3_desc || 'Armada logistik siap mengantarkan langsung ke lokasi konstruksi.' },
+              { icon: Award, title: cms.about_point_1_title || 'Kualitas Bersertifikat',  desc: cms.about_point_1_desc || 'Setiap material melewati pemeriksaan kualitas ketat sesuai standar SNI.',                  variant: fadeLeft  },
+              { icon: Users, title: cms.about_point_2_title || 'Konsultasi Proyek',        desc: cms.about_point_2_desc || 'Tim ahli kami siap membantu menghitung kebutuhan material Anda.',                         variant: fadeUp    },
+              { icon: Truck, title: cms.about_point_3_title || 'Pengiriman Massal',        desc: cms.about_point_3_desc || 'Armada logistik siap mengantarkan langsung ke lokasi konstruksi.',                       variant: fadeRight },
             ].map((item, i) => (
-              <div key={i} className="flex gap-5 p-6 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition">
+              <motion.div
+                key={i}
+                variants={item.variant}
+                custom={i * 0.1}
+                initial="hidden"
+                animate={whyInView ? 'visible' : 'hidden'}
+                whileHover={{ backgroundColor: 'rgba(255,255,255,0.1)', y: -4 }}
+                transition={{ duration: 0.25 }}
+                className="flex gap-5 p-6 bg-white/5 rounded-2xl border border-white/10 cursor-default"
+              >
                 <div className="w-14 h-14 bg-primary/20 rounded-xl flex items-center justify-center shrink-0">
                   <item.icon size={26} className="text-primary" />
                 </div>
@@ -338,25 +699,50 @@ export default function HomePage() {
                   <h3 className="text-xl font-bold mb-2">{item.title}</h3>
                   <p className="text-gray-400 leading-relaxed">{item.desc}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      <section className="py-24 bg-primary">
-        <div className="max-w-4xl mx-auto px-4 text-center text-white">
-          <h2 className="text-5xl font-bold mb-5">{cms.cta_title || 'Siap Memulai Proyek Anda?'}</h2>
-          <p className="text-white/80 text-xl mb-12 max-w-2xl mx-auto">{cms.cta_subtitle || 'Hubungi tim kami atau mulai belanja sekarang.'}</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/products" className="px-10 py-4 bg-white text-primary font-bold rounded-xl hover:bg-gray-100 transition shadow-xl text-lg">
-              {cms.cta_button_text || 'Mulai Belanja'}
-            </Link>
-            <Link href="/contact" className="flex items-center justify-center gap-2 px-10 py-4 bg-white/20 text-white font-bold rounded-xl hover:bg-white/30 transition border border-white/30 text-lg">
-              <Phone size={20} /> {cms.cta_secondary_text || 'Hubungi Kami'}
-            </Link>
-          </div>
+      {/* ══════════════════════════════════════════════
+          CTA — animated gradient + shimmer sweep
+      ══════════════════════════════════════════════ */}
+      <section className="py-24 cta-gradient relative overflow-hidden">
+        {/* Shimmer sweep overlay */}
+        <div className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/15 to-transparent shimmer-sweep pointer-events-none" />
+
+        <div ref={ctaRef} className="max-w-4xl mx-auto px-4 text-center text-white relative z-10">
+          <motion.h2
+            variants={fadeUp} custom={0}
+            initial="hidden" animate={ctaInView ? 'visible' : 'hidden'}
+            className="text-5xl font-bold mb-5"
+          >
+            {cms.cta_title || 'Siap Memulai Proyek Anda?'}
+          </motion.h2>
+          <motion.p
+            variants={fadeUp} custom={0.15}
+            initial="hidden" animate={ctaInView ? 'visible' : 'hidden'}
+            className="text-white/80 text-xl mb-12 max-w-2xl mx-auto"
+          >
+            {cms.cta_subtitle || 'Hubungi tim kami atau mulai belanja sekarang.'}
+          </motion.p>
+          <motion.div
+            variants={fadeUp} custom={0.3}
+            initial="hidden" animate={ctaInView ? 'visible' : 'hidden'}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+              <Link href="/products" className="block px-10 py-4 bg-white text-primary font-bold rounded-xl hover:bg-gray-100 transition shadow-xl text-lg">
+                {cms.cta_button_text || 'Mulai Belanja'}
+              </Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+              <Link href="/contact" className="flex items-center justify-center gap-2 px-10 py-4 bg-white/20 text-white font-bold rounded-xl hover:bg-white/30 transition border border-white/30 text-lg">
+                <Phone size={20} /> {cms.cta_secondary_text || 'Hubungi Kami'}
+              </Link>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 

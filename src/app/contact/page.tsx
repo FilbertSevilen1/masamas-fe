@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import api from '@/lib/api';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import Link from 'next/link';
 import { Phone, Mail, MapPin, Clock, ArrowRight } from 'lucide-react';
+import { motion, useInView } from 'framer-motion';
+import { fadeUp, fadeLeft, fadeRight, staggerContainer, staggerItem, EASE } from '@/lib/animations';
 
 const WhatsAppIcon = ({ size = 22, className = '' }: { size?: number; className?: string }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" className={className}>
@@ -15,6 +17,8 @@ const WhatsAppIcon = ({ size = 22, className = '' }: { size?: number; className?
 
 export default function ContactPage() {
   const [cms, setCms] = useState<any>({});
+  const contentRef = useRef<HTMLDivElement>(null);
+  const contentInView = useInView(contentRef, { once: true, margin: '-60px' as `${number}px` });
 
   useEffect(() => {
     api.get('/cms/map').then(r => setCms(r.data)).catch(() => {});
@@ -25,121 +29,97 @@ export default function ContactPage() {
   const waLink = cleanWhatsApp.startsWith('0') ? `62${cleanWhatsApp.slice(1)}` : cleanWhatsApp;
 
   const contactItems = [
-    { 
-      icon: Phone, 
-      title: 'Telepon', 
-      value: cms.footer_phone || '+62 21 1234 5678', 
-      sub: 'Senin–Sabtu, 08.00–17.00 WIB',
-      link: `tel:${(cms.footer_phone || '+622112345678').replace(/\s+/g, '')}`
-    },
-    { 
-      icon: WhatsAppIcon, 
-      title: 'WhatsApp', 
-      value: rawWhatsApp, 
-      sub: 'Senin–Minggu, Respon Cepat',
-      link: `https://wa.me/${waLink}`
-    },
-    { 
-      icon: Mail, 
-      title: 'Email', 
-      value: cms.footer_email || 'info@masamas.co.id', 
-      sub: 'Balas dalam 1x24 jam',
-      link: `mailto:${cms.footer_email || 'info@masamas.co.id'}`
-    },
-    { 
-      icon: MapPin, 
-      title: 'Alamat', 
-      value: cms.footer_address || 'Jl. Industri Raya No. 45, Jakarta Timur, 13920', 
-      sub: 'Lokasi Kantor Utama',
-      link: null
-    },
-    { 
-      icon: Clock, 
-      title: 'Jam Operasional', 
-      value: 'Senin–Jumat: 08.00–17.00, Sabtu: 08.00–13.00', 
-      sub: 'WIB (Waktu Indonesia Barat)',
-      link: null
-    },
+    { icon: Phone,        title: 'Telepon',          value: cms.footer_phone || '+62 21 1234 5678', sub: 'Senin–Sabtu, 08.00–17.00 WIB', link: `tel:${(cms.footer_phone || '+622112345678').replace(/\s+/g, '')}` },
+    { icon: WhatsAppIcon, title: 'WhatsApp',          value: rawWhatsApp, sub: 'Senin–Minggu, Respon Cepat', link: `https://wa.me/${waLink}` },
+    { icon: Mail,         title: 'Email',             value: cms.footer_email || 'info@masamas.co.id', sub: 'Balas dalam 1x24 jam', link: `mailto:${cms.footer_email || 'info@masamas.co.id'}` },
+    { icon: MapPin,       title: 'Alamat',            value: cms.footer_address || 'Jl. Industri Raya No. 45, Jakarta Timur, 13920', sub: 'Lokasi Kantor Utama', link: null },
+    { icon: Clock,        title: 'Jam Operasional',   value: 'Senin–Jumat: 08.00–17.00, Sabtu: 08.00–13.00', sub: 'WIB (Waktu Indonesia Barat)', link: null },
   ];
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen flex flex-col overflow-x-hidden">
       <Navbar />
 
       {/* Hero */}
       <section className="bg-charcoal text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-5xl font-bold mb-4">Hubungi Kami</h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">Tim kami siap membantu Anda. Jangan ragu untuk menghubungi kami kapanpun Anda butuh bantuan.</p>
+          <motion.h1 initial={{ opacity: 0, y: 35 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE, delay: 0.15 }}
+            className="text-5xl font-bold mb-4">Hubungi Kami</motion.h1>
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE, delay: 0.3 }}
+            className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Tim kami siap membantu Anda. Jangan ragu untuk menghubungi kami kapanpun Anda butuh bantuan.
+          </motion.p>
         </div>
       </section>
 
       <section className="py-20 bg-gray-50 flex-grow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div ref={contentRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+
             {/* Contact Info */}
-            <div className="space-y-8">
+            <motion.div variants={fadeLeft} custom={0} initial="hidden" animate={contentInView ? 'visible' : 'hidden'} className="space-y-8">
               <div>
                 <h2 className="text-3xl font-bold text-charcoal mb-6">Informasi Kontak</h2>
                 <p className="text-gray-600 leading-relaxed">Kami membuka layanan konsultasi dan pemesanan setiap hari kerja. Hubungi kami melalui salah satu saluran berikut.</p>
               </div>
-
-              {contactItems.map((item, i) => (
-                <div key={i} className="flex items-start gap-5">
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
-                    <item.icon size={22} className="text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-charcoal">{item.title}</p>
-                    {item.link ? (
-                      <a 
-                        href={item.link} 
-                        target={item.title === 'WhatsApp' ? '_blank' : undefined} 
-                        rel={item.title === 'WhatsApp' ? 'noopener noreferrer' : undefined}
-                        className="text-gray-800 hover:text-primary transition-colors font-medium mt-0.5 block hover:underline"
-                      >
-                        {item.value}
-                      </a>
-                    ) : (
-                      <p className="text-gray-800 mt-0.5">{item.value}</p>
-                    )}
-                    <p className="text-gray-500 text-sm">{item.sub}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+              <motion.div className="space-y-6" variants={staggerContainer} initial="hidden" animate={contentInView ? 'visible' : 'hidden'}>
+                {contactItems.map((item, i) => (
+                  <motion.div key={i} variants={staggerItem} className="flex items-start gap-5"
+                    whileHover={{ x: 4 }} transition={{ duration: 0.2 }}>
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                      <item.icon size={22} className="text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-charcoal">{item.title}</p>
+                      {item.link ? (
+                        <a href={item.link} target={item.title === 'WhatsApp' ? '_blank' : undefined}
+                          rel={item.title === 'WhatsApp' ? 'noopener noreferrer' : undefined}
+                          className="text-gray-800 hover:text-primary transition-colors font-medium mt-0.5 block hover:underline">
+                          {item.value}
+                        </a>
+                      ) : (
+                        <p className="text-gray-800 mt-0.5">{item.value}</p>
+                      )}
+                      <p className="text-gray-500 text-sm">{item.sub}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </motion.div>
 
             {/* Contact Form */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm">
+            <motion.div variants={fadeRight} custom={0.1} initial="hidden" animate={contentInView ? 'visible' : 'hidden'}
+              className="bg-white p-8 rounded-2xl shadow-sm">
               <h3 className="text-2xl font-bold text-charcoal mb-6">Kirim Pesan</h3>
               <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); alert('Pesan terkirim! Kami akan segera menghubungi Anda.'); }}>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-charcoal mb-2">Nama Lengkap</label>
-                    <input required type="text" placeholder="Nama Anda" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                    <input required type="text" placeholder="Nama Anda" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-charcoal mb-2">Telepon</label>
-                    <input type="tel" placeholder="+62 8xx xxxx xxxx" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                    <input type="tel" placeholder="+62 8xx xxxx xxxx" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-charcoal mb-2">Email</label>
-                  <input required type="email" placeholder="email@anda.com" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  <input required type="email" placeholder="email@anda.com" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-charcoal mb-2">Subjek</label>
-                  <input required type="text" placeholder="Topik pesan Anda" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  <input required type="text" placeholder="Topik pesan Anda" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-charcoal mb-2">Pesan</label>
-                  <textarea required rows={5} placeholder="Tulis pesan Anda di sini..." className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"></textarea>
+                  <textarea required rows={5} placeholder="Tulis pesan Anda di sini..." className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none transition" />
                 </div>
-                <button type="submit" className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition shadow-lg shadow-primary/30 flex items-center justify-center gap-2">
+                <motion.button type="submit" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition shadow-lg shadow-primary/30 flex items-center justify-center gap-2">
                   Kirim Pesan <ArrowRight size={18} />
-                </button>
+                </motion.button>
               </form>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
