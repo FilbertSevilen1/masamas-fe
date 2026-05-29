@@ -92,33 +92,28 @@ export default function GalleryPage() {
     <main className="min-h-screen flex flex-col bg-gray-50 overflow-x-hidden">
       <Navbar />
 
-      {/* Header Section */}
-      <div className="bg-charcoal text-white py-16 relative overflow-hidden">
-        {/* Subtle geometric grid background */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
-          backgroundSize: '24px 24px'
-        }} />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-3 tracking-tight">Galeri Portofolio Proyek</h1>
-            <p className="text-gray-400 text-lg max-w-2xl leading-relaxed">
-              Dokumentasi proyek konstruksi residensial, komersial, dan industrial yang kokoh dibangun menggunakan material bangunan premium dari Masamas.
-            </p>
-            <div className="flex items-center space-x-2 text-sm text-gray-500 mt-6">
-              <Link href="/" className="hover:text-primary transition-colors flex items-center gap-1.5 font-medium">
-                <ArrowLeft size={14} /> Beranda
-              </Link>
-              <span>/</span>
-              <span className="text-white font-medium">Galeri</span>
-            </div>
+      {/* ── HERO / HEADER ── */}
+      <section className="bg-charcoal text-white py-24 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <img src="https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?q=80&w=1600" alt="bg" className="w-full h-full object-cover" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE, delay: 0.1 }}
+            className="text-primary font-bold uppercase tracking-widest text-sm mb-4">Galeri Proyek</motion.p>
+          <motion.h1 initial={{ opacity: 0, y: 35 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE, delay: 0.22 }}
+            className="text-5xl font-bold mb-6">Dokumentasi Portofolio Proyek</motion.h1>
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE, delay: 0.38 }}
+            className="text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed">
+            Dokumentasi proyek konstruksi residensial, komersial, dan industrial yang kokoh dibangun menggunakan material bangunan premium dari Masamas.
+          </motion.p>
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE, delay: 0.5 }}
+            className="flex justify-center items-center space-x-2 text-sm text-gray-400 mt-6 bg-white/5 backdrop-blur-md px-4 py-2.5 rounded-2xl w-fit mx-auto border border-white/10 shadow-lg">
+            <Link href="/" className="hover:text-primary transition-colors flex items-center gap-1.5 font-medium">Beranda</Link>
+            <span>/</span>
+            <span className="text-white font-medium">Galeri</span>
           </motion.div>
         </div>
-      </div>
+      </section>
 
       {/* Gallery Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full flex-grow">

@@ -5,8 +5,8 @@ import api from '@/lib/api';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import Link from 'next/link';
-import { Phone, Mail, MapPin, Clock, ArrowRight } from 'lucide-react';
-import { motion, useInView } from 'framer-motion';
+import { Phone, Mail, MapPin, Clock, ArrowRight, Maximize2, X } from 'lucide-react';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { fadeUp, fadeLeft, fadeRight, staggerContainer, staggerItem, EASE } from '@/lib/animations';
 
 const WhatsAppIcon = ({ size = 22, className = '' }: { size?: number; className?: string }) => (
@@ -17,12 +17,48 @@ const WhatsAppIcon = ({ size = 22, className = '' }: { size?: number; className?
 
 export default function ContactPage() {
   const [cms, setCms] = useState<any>({});
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const contentInView = useInView(contentRef, { once: true, margin: '-60px' as `${number}px` });
+
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
 
   useEffect(() => {
     api.get('/cms/map').then(r => setCms(r.data)).catch(() => {});
   }, []);
+
+  // Lock body scroll when modal is active
+  useEffect(() => {
+    if (isMapModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMapModalOpen]);
+
+  // Support pressing escape to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMapModalOpen(false);
+      }
+    };
+    if (isMapModalOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMapModalOpen]);
 
   const rawWhatsApp = cms.footer_whatsapp || '+62 812 3456 7890';
   const cleanWhatsApp = rawWhatsApp.replace(/[^0-9]/g, '');
@@ -36,19 +72,53 @@ export default function ContactPage() {
     { icon: Clock,        title: 'Jam Operasional',   value: 'Senin–Jumat: 08.00–17.00, Sabtu: 08.00–13.00', sub: 'WIB (Waktu Indonesia Barat)', link: null },
   ];
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formattedText = `Halo Admin Masamas, saya ingin mengirimkan pesan baru:\n\n` +
+      `*Nama*: ${formData.name}\n` +
+      `*Telepon*: ${formData.phone || '-'}\n` +
+      `*Email*: ${formData.email}\n` +
+      `*Subjek*: ${formData.subject}\n` +
+      `*Pesan*: ${formData.message}`;
+
+    const waRedirect = `https://wa.me/${waNumber()}?text=${encodeURIComponent(formattedText)}`;
+    window.open(waRedirect, '_blank', 'noopener,noreferrer');
+  };
+
+  const waNumber = () => {
+    const cleanNum = rawWhatsApp.replace(/[^0-9]/g, '');
+    return cleanNum.startsWith('0') ? `62${cleanNum.slice(1)}` : cleanNum;
+  };
+
   return (
     <main className="min-h-screen flex flex-col overflow-x-hidden">
       <Navbar />
 
-      {/* Hero */}
-      <section className="bg-charcoal text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1 initial={{ opacity: 0, y: 35 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE, delay: 0.15 }}
-            className="text-5xl font-bold mb-4">Hubungi Kami</motion.h1>
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE, delay: 0.3 }}
-            className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Tim kami siap membantu Anda. Jangan ragu untuk menghubungi kami kapanpun Anda butuh bantuan.
+      {/* ── HERO / HEADER ── */}
+      <section className="bg-charcoal text-white py-24 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1600" alt="bg" className="w-full h-full object-cover" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE, delay: 0.1 }}
+            className="text-primary font-bold uppercase tracking-widest text-sm mb-4">Kontak Kami</motion.p>
+          <motion.h1 initial={{ opacity: 0, y: 35 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE, delay: 0.22 }}
+            className="text-5xl font-bold mb-6">Hubungi Tim Ahli Kami</motion.h1>
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE, delay: 0.38 }}
+            className="text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed">
+            Tim kami siap membantu Anda menghitung kebutuhan material konstruksi Anda. Jangan ragu untuk menghubungi kami kapanpun Anda membutuhkan dukungan teknis atau pemesanan.
           </motion.p>
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE, delay: 0.5 }}
+            className="flex justify-center items-center space-x-2 text-sm text-gray-400 mt-6 bg-white/5 backdrop-blur-md px-4 py-2.5 rounded-2xl w-fit mx-auto border border-white/10 shadow-lg">
+            <Link href="/" className="hover:text-primary transition-colors flex items-center gap-1.5 font-medium">Beranda</Link>
+            <span>/</span>
+            <span className="text-white font-medium">Kontak</span>
+          </motion.div>
         </div>
       </section>
 
@@ -89,40 +159,120 @@ export default function ContactPage() {
 
             {/* Contact Form */}
             <motion.div variants={fadeRight} custom={0.1} initial="hidden" animate={contentInView ? 'visible' : 'hidden'}
-              className="bg-white p-8 rounded-2xl shadow-sm">
+              className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h3 className="text-2xl font-bold text-charcoal mb-6">Kirim Pesan</h3>
-              <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); alert('Pesan terkirim! Kami akan segera menghubungi Anda.'); }}>
+              <form className="space-y-5" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-charcoal mb-2">Nama Lengkap</label>
-                    <input required type="text" placeholder="Nama Anda" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition" />
+                    <input required name="name" value={formData.name} onChange={handleChange} type="text" placeholder="Nama Anda" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-charcoal mb-2">Telepon</label>
-                    <input type="tel" placeholder="+62 8xx xxxx xxxx" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition" />
+                    <input name="phone" value={formData.phone} onChange={handleChange} type="tel" placeholder="+62 8xx xxxx xxxx" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-charcoal mb-2">Email</label>
-                  <input required type="email" placeholder="email@anda.com" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition" />
+                  <input required name="email" value={formData.email} onChange={handleChange} type="email" placeholder="email@anda.com" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-charcoal mb-2">Subjek</label>
-                  <input required type="text" placeholder="Topik pesan Anda" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition" />
+                  <input required name="subject" value={formData.subject} onChange={handleChange} type="text" placeholder="Topik pesan Anda" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-charcoal mb-2">Pesan</label>
-                  <textarea required rows={5} placeholder="Tulis pesan Anda di sini..." className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none transition" />
+                  <textarea required name="message" value={formData.message} onChange={handleChange} rows={5} placeholder="Tulis pesan Anda di sini..." className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none transition" />
                 </div>
-                <motion.button type="submit" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                  className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition shadow-lg shadow-primary/30 flex items-center justify-center gap-2">
-                  Kirim Pesan <ArrowRight size={18} />
+                <motion.button type="submit" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                  className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+                  Kirim via WhatsApp <ArrowRight size={18} />
                 </motion.button>
               </form>
             </motion.div>
           </div>
         </div>
       </section>
+
+      {/* Google Maps Location Section */}
+      {cms.footer_gmaps && (
+        <section 
+          onClick={() => setIsMapModalOpen(true)}
+          className="bg-white border-t border-gray-100 relative w-full h-[450px] overflow-hidden cursor-pointer group"
+        >
+          <iframe
+            src={cms.footer_gmaps}
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="w-full h-full grayscale opacity-80 group-hover:opacity-90 group-hover:scale-[1.01] transition-all duration-700 pointer-events-none"
+          />
+          {/* Glassmorphic Interactive Hover Overlay */}
+          <div className="absolute inset-0 bg-charcoal/20 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              whileHover={{ scale: 1.05 }}
+              className="px-6 py-3 bg-white/95 backdrop-blur-md rounded-xl shadow-2xl border border-white/20 flex items-center gap-2 text-charcoal font-bold text-sm hover:bg-white transition-colors"
+            >
+              <Maximize2 size={16} className="text-primary animate-pulse" />
+              <span>Klik untuk Perbesar Peta</span>
+            </motion.div>
+          </div>
+          {/* Floating button always visible on mobile in corner */}
+          <div className="absolute bottom-4 right-4 z-10 sm:hidden">
+            <div className="p-3 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-gray-100 text-charcoal">
+              <Maximize2 size={16} className="text-primary" />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Google Maps Modal */}
+      <AnimatePresence>
+        {isMapModalOpen && cms.footer_gmaps && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+            onClick={() => setIsMapModalOpen(false)}
+          >
+            {/* Modal Body */}
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="relative w-full max-w-5xl h-[80vh] bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setIsMapModalOpen(false)}
+                className="absolute top-4 right-4 z-10 p-3 bg-white/95 backdrop-blur-md text-charcoal hover:text-primary hover:bg-white rounded-2xl shadow-xl transition-all border border-gray-100 hover:scale-105 active:scale-95 duration-200"
+              >
+                <X size={20} />
+              </button>
+
+              {/* Interactive Iframe */}
+              <iframe
+                src={cms.footer_gmaps}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="w-full h-full"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Footer />
     </main>

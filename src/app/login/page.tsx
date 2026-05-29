@@ -100,7 +100,7 @@ function LoginForm() {
           id="login-submit"
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-orange-600 transition shadow-lg shadow-primary/30 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition shadow-lg shadow-primary/30 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? 'Signing in...' : 'Sign In'}
         </button>

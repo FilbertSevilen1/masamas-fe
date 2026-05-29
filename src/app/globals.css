@@ -5,10 +5,10 @@ html {
 }
 
 @theme {
-  /* Primary - Masamas Orange */
-  --color-primary: #f97316;
-  --color-primary-light: #fb923c;
-  --color-primary-dark: #ea580c;
+  /* Primary - Masamas Premium Emerald */
+  --color-primary: #10b981;
+  --color-primary-light: #34d399;
+  --color-primary-dark: #059669;
 
   /* Charcoal - Industrial Dark */
   --color-charcoal: #1f2230;
@@ -48,13 +48,13 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Custom component classes */
 .btn-primary {
-  background-color: #f97316;
+  background-color: #10b981;
   color: #ffffff;
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
   font-weight: 700;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 20px rgba(249, 115, 22, 0.35);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
   display: inline-block;
   cursor: pointer;
   border: none;
@@ -62,9 +62,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary:hover {
-  background-color: #ea580c;
+  background-color: #059669;
   transform: translateY(-1px) scale(1.02);
-  box-shadow: 0 12px 24px rgba(249, 115, 22, 0.45);
+  box-shadow: 0 12px 24px rgba(16, 185, 129, 0.45);
 }
 
 .section-container {
@@ -103,7 +103,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .cta-gradient {
-  background: linear-gradient(-45deg, #f97316, #ea580c, #c2410c, #fb923c);
+  background: linear-gradient(-45deg, #10b981, #059669, #047857, #34d399);
   background-size: 300% 300%;
   animation: gradientShift 8s ease infinite;
 }
@@ -132,5 +132,15 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes drawLine {
   from { width: 0; }
   to   { width: 5rem; }
+}
+
+/* ── Slow bounce animation for premium emojis ── */
+@keyframes bounceSlow {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+.animate-bounce-slow {
+  animation: bounceSlow 3s ease-in-out infinite;
 }
 

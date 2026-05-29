@@ -124,7 +124,7 @@ const Navbar = () => {
                         key={p.id}
                         href={`/products/${p.slug}`}
                         onClick={() => setProdDropdownOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 hover:bg-orange-50 text-sm text-charcoal hover:text-primary transition-colors"
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-emerald-50 text-sm text-charcoal hover:text-primary transition-colors"
                       >
                         {p.thumbnail ? (
                           <img src={p.thumbnail} alt="" className="w-8 h-8 rounded object-cover" />
@@ -141,7 +141,7 @@ const Navbar = () => {
                     <Link
                       href="/products"
                       onClick={() => setProdDropdownOpen(false)}
-                      className="block text-center text-xs font-bold text-primary hover:text-orange-600 py-2 transition"
+                      className="block text-center text-xs font-bold text-primary hover:text-emerald-600 py-2 transition"
                     >
                       Lihat Semua Produk
                     </Link>
@@ -180,7 +180,7 @@ const Navbar = () => {
                         key={c.id}
                         href={`/products?category=${c.slug}`}
                         onClick={() => setCatDropdownOpen(false)}
-                        className="block px-4 py-2 hover:bg-orange-50 text-sm text-charcoal hover:text-primary transition-colors font-medium"
+                        className="block px-4 py-2 hover:bg-emerald-50 text-sm text-charcoal hover:text-primary transition-colors font-medium"
                       >
                         {c.name}
                       </Link>
@@ -192,7 +192,7 @@ const Navbar = () => {
                     <Link
                       href="/categories"
                       onClick={() => setCatDropdownOpen(false)}
-                      className="block text-center text-xs font-bold text-primary hover:text-orange-600 py-2 transition"
+                      className="block text-center text-xs font-bold text-primary hover:text-emerald-600 py-2 transition"
                     >
                       Lihat Semua Kategori
                     </Link>
@@ -245,7 +245,7 @@ const Navbar = () => {
                 <Link href="/login" className="px-4 py-2 text-charcoal font-medium hover:text-primary transition-colors">
                   Masuk
                 </Link>
-                <Link href="/register" className="flex items-center space-x-1 px-4 py-2 bg-primary text-white rounded-xl hover:bg-orange-600 transition font-bold shadow-lg shadow-primary/30">
+                <Link href="/register" className="flex items-center space-x-1 px-4 py-2 bg-primary text-white rounded-xl hover:bg-emerald-600 transition font-bold shadow-lg shadow-primary/30">
                   <span>Daftar</span>
                 </Link>
               </div>

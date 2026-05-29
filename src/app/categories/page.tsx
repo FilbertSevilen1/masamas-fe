@@ -34,31 +34,38 @@ export default function CategoriesPage() {
   }, []);
 
   return (
-    <main className="min-h-screen flex flex-col bg-gray-50 overflow-x-hidden">
+    <main className="min-h-screen flex flex-col bg-gray-50 overflow-x-hidden relative">
+      {/* Subtle premium green dot grid background pattern */}
+      <div className="absolute inset-0 opacity-[0.025] pointer-events-none" style={{
+        backgroundImage: 'radial-gradient(circle, #059669 1.5px, transparent 1.5px)',
+        backgroundSize: '32px 32px'
+      }} />
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-primary/[0.015] to-white pointer-events-none" />
+
       <Navbar />
 
-      <div className="bg-charcoal text-white py-14 relative overflow-hidden">
-        {/* Subtle decorative background pattern */}
-        <div className="absolute inset-0 opacity-[0.035]" style={{
-          backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
-          backgroundSize: '24px 24px'
-        }} />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: EASE }}
-          >
-            <h1 className="text-4xl font-bold mb-2 tracking-tight">Semua Kategori</h1>
-            <p className="text-gray-400">Temukan produk berdasarkan kategori konstruksi</p>
-            <div className="flex items-center space-x-2 text-sm text-gray-500 mt-3">
-              <Link href="/" className="hover:text-primary transition-colors">Beranda</Link>
-              <span>/</span>
-              <span className="text-white">Kategori</span>
-            </div>
+      {/* ── HERO / HEADER ── */}
+      <section className="bg-charcoal text-white py-24 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <img src="https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1600" alt="bg" className="w-full h-full object-cover" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE, delay: 0.1 }}
+            className="text-primary font-bold uppercase tracking-widest text-sm mb-4">Kategori Produk</motion.p>
+          <motion.h1 initial={{ opacity: 0, y: 35 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE, delay: 0.22 }}
+            className="text-5xl font-bold mb-6">Belanja per Kategori</motion.h1>
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE, delay: 0.38 }}
+            className="text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed">
+            Temukan berbagai macam material bangunan berkualitas premium yang dikelompokkan berdasarkan kategori konstruksi untuk mempermudah pencarian Anda.
+          </motion.p>
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE, delay: 0.5 }}
+            className="flex justify-center items-center space-x-2 text-sm text-gray-400 mt-6 bg-white/5 backdrop-blur-md px-4 py-2.5 rounded-2xl w-fit mx-auto border border-white/10 shadow-lg">
+            <Link href="/" className="hover:text-primary transition-colors flex items-center gap-1.5 font-medium">Beranda</Link>
+            <span>/</span>
+            <span className="text-white font-medium">Kategori</span>
           </motion.div>
         </div>
-      </div>
+      </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-grow w-full">
         {loading ? (
@@ -87,7 +94,16 @@ export default function CategoriesPage() {
                   {cat.image ? (
                     <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-60" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-charcoal to-charcoal-light flex items-center justify-center text-6xl">🏗️</div>
+                    <div className="w-full h-full bg-gradient-to-br from-charcoal via-charcoal/95 to-primary/25 flex flex-col items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-700">
+                      {/* Blueprint grid lines */}
+                      <div className="absolute inset-0 opacity-10" style={{
+                        backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
+                        backgroundSize: '20px 20px'
+                      }} />
+                      {/* Glowing ambient light */}
+                      <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition-colors" />
+                      <span className="text-5xl drop-shadow-lg relative z-10 animate-pulse">🏗️</span>
+                    </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-5">

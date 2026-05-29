@@ -108,29 +108,28 @@ function ProductsContent() {
     <main className="min-h-screen flex flex-col bg-gray-50 overflow-x-hidden">
       <Navbar />
 
-      {/* Header */}
-      <div className="bg-charcoal text-white py-14 relative overflow-hidden">
-        {/* Subtle decorative background pattern */}
-        <div className="absolute inset-0 opacity-[0.035]" style={{
-          backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
-          backgroundSize: '24px 24px'
-        }} />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: EASE }}
-          >
-            <h1 className="text-4xl font-bold mb-2 tracking-tight">Katalog Produk</h1>
-            <p className="text-gray-400">Temukan material bangunan berkualitas untuk proyek Anda</p>
-            <div className="flex items-center space-x-2 text-sm text-gray-500 mt-3">
-              <Link href="/" className="hover:text-primary transition-colors">Beranda</Link>
-              <span>/</span>
-              <span className="text-white">Produk</span>
-            </div>
+      {/* ── HERO / HEADER ── */}
+      <section className="bg-charcoal text-white py-24 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=1600" alt="bg" className="w-full h-full object-cover" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE, delay: 0.1 }}
+            className="text-primary font-bold uppercase tracking-widest text-sm mb-4">Katalog Produk</motion.p>
+          <motion.h1 initial={{ opacity: 0, y: 35 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE, delay: 0.22 }}
+            className="text-5xl font-bold mb-6">Pilihan Material Terbaik</motion.h1>
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE, delay: 0.38 }}
+            className="text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed">
+            Temukan material bangunan berkualitas tinggi langsung dari produsen terpercaya. Kami menjamin ketahanan, keaslian, dan pengiriman tepat waktu ke lokasi proyek Anda.
+          </motion.p>
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE, delay: 0.5 }}
+            className="flex justify-center items-center space-x-2 text-sm text-gray-400 mt-6 bg-white/5 backdrop-blur-md px-4 py-2.5 rounded-2xl w-fit mx-auto border border-white/10 shadow-lg">
+            <Link href="/" className="hover:text-primary transition-colors flex items-center gap-1.5 font-medium">Beranda</Link>
+            <span>/</span>
+            <span className="text-white font-medium">Produk</span>
           </motion.div>
         </div>
-      </div>
+      </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-grow">
         {/* Filter Bar */}
@@ -146,7 +145,7 @@ function ProductsContent() {
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 bg-white"
               />
             </div>
-            <button type="submit" className="px-5 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-orange-600 transition shadow-lg shadow-primary/10">
+            <button type="submit" className="px-5 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition shadow-lg shadow-primary/10">
               Cari
             </button>
           </form>
@@ -290,10 +289,16 @@ export default function ProductsPage() {
     <Suspense fallback={
       <main className="min-h-screen flex flex-col bg-gray-50">
         <Navbar />
-        <div className="bg-charcoal text-white py-14">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-4xl font-bold mb-2">Katalog Produk</h1>
-            <p className="text-gray-400">Temukan material bangunan berkualitas untuk proyek Anda</p>
+        <div className="bg-charcoal text-white py-24 relative overflow-hidden text-center">
+          <div className="absolute inset-0 opacity-20">
+            <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=1600" alt="bg" className="w-full h-full object-cover" />
+          </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <p className="text-primary font-bold uppercase tracking-widest text-sm mb-4">Katalog Produk</p>
+            <h1 className="text-5xl font-bold mb-6">Pilihan Material Terbaik</h1>
+            <p className="text-gray-300 text-lg max-w-3xl mx-auto">
+              Temukan material bangunan berkualitas tinggi langsung dari produsen terpercaya.
+            </p>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 flex-grow w-full flex items-center justify-center">

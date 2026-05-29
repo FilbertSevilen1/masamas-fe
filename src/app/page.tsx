@@ -117,7 +117,14 @@ function TiltCard({ children, className }: { children: React.ReactNode; classNam
   return (
     <motion.div
       ref={cardRef}
-      style={{ rotateX, rotateY, scale, transformPerspective: 800 }}
+      style={{
+        rotateX,
+        rotateY,
+        scale,
+        transformPerspective: 800,
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden'
+      }}
       onMouseMove={(e) => {
         const rect = cardRef.current?.getBoundingClientRect();
         if (!rect) return;
@@ -126,7 +133,7 @@ function TiltCard({ children, className }: { children: React.ReactNode; classNam
         scale.set(1.04);
       }}
       onMouseLeave={() => { xVal.set(0); yVal.set(0); scale.set(1); }}
-      className={className}
+      className={`${className} isolate overflow-hidden`}
     >
       {children}
     </motion.div>
@@ -255,13 +262,6 @@ export default function HomePage() {
               {/* Slide content — staggered text reveal */}
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center relative z-20">
                 <div className="max-w-2xl">
-                  <motion.div
-                    animate={index === currentSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-                    className="inline-flex items-center gap-2 bg-primary/20 border border-primary/30 text-primary px-4 py-2 rounded-full text-sm font-bold mb-6 uppercase tracking-widest"
-                  >
-                    🏗️ Material Bangunan Terpercaya
-                  </motion.div>
                   <motion.h1
                     animate={index === currentSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 35 }}
                     transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.22 }}
@@ -309,6 +309,12 @@ export default function HomePage() {
           SHOP BY CATEGORY — stagger + 3D tilt
       ══════════════════════════════════════════════ */}
       <section className="bg-gray-50 pt-1 relative">
+        {/* Subtle premium green dot grid background pattern */}
+        <div className="absolute inset-0 opacity-[0.025] pointer-events-none" style={{
+          backgroundImage: 'radial-gradient(circle, #059669 1.5px, transparent 1.5px)',
+          backgroundSize: '32px 32px'
+        }} />
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-primary/[0.015] to-gray-50 pointer-events-none" />
         {/* ── QUICK CONTACT FLOATING CARDS ── */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-30 -mt-16 md:-mt-20 mb-8 md:mb-12">
           <motion.div
@@ -437,21 +443,42 @@ export default function HomePage() {
             >
               {categories.map(cat => (
                 <motion.div key={cat.id} variants={staggerItem}>
-                  <TiltCard className="group relative rounded-2xl overflow-hidden aspect-square bg-charcoal shadow-sm hover:shadow-xl transition-shadow duration-300">
-                    <Link href={`/products?category=${cat.slug}`} className="block w-full h-full">
+                  <TiltCard className="group relative rounded-2xl overflow-hidden aspect-square bg-charcoal shadow-sm hover:shadow-xl transition-all duration-300 border border-white/5 group-hover:border-primary/30">
+                    <Link href={`/products?category=${cat.slug}`} className="block w-full h-full rounded-2xl">
+                      
+                      {/* Floating product count glass badge */}
+                      <span className="absolute top-4 left-4 z-10 px-2.5 py-1 bg-black/40 backdrop-blur-md rounded-lg text-[10px] font-bold text-white border border-white/10 group-hover:bg-primary group-hover:border-primary/50 transition-all duration-300 shadow-sm uppercase tracking-wider">
+                        {cat._count.products} Produk
+                      </span>
+
                       {cat.image ? (
-                        <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-60" />
+                        <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-60 rounded-2xl" />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-charcoal to-charcoal-light flex items-center justify-center text-6xl">🏗️</div>
+                        <div className="w-full h-full bg-gradient-to-br from-charcoal via-charcoal/95 to-primary/25 flex flex-col items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-700 rounded-2xl">
+                          {/* Blueprint grid lines */}
+                          <div className="absolute inset-0 opacity-10" style={{
+                            backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
+                            backgroundSize: '20px 20px'
+                          }} />
+                          {/* Glowing ambient light */}
+                          <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition-colors animate-pulse" />
+                          <span className="text-5xl drop-shadow-lg relative z-10 animate-bounce-slow">🏗️</span>
+                        </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-5">
-                        <h3 className="text-white font-bold text-lg leading-tight">{cat.name}</h3>
-                        <p className="text-gray-300 text-sm mt-1">{cat._count.products} Produk</p>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent group-hover:via-black/20 transition-all duration-300 rounded-2xl" />
+                      
+                      <div className="absolute bottom-0 left-0 right-0 p-5 transform group-hover:translate-y-[-4px] transition-transform duration-300">
+                        <h3 className="text-white font-extrabold text-lg leading-tight tracking-tight">{cat.name}</h3>
+                        <p className="text-gray-300 text-xs font-semibold mt-1 group-hover:text-primary transition-colors flex items-center gap-1">
+                          Lihat Kategori <ArrowRight size={12} className="inline opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+                        </p>
                       </div>
-                      <div className="absolute top-4 right-4 w-8 h-8 bg-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+
+                      {/* Smooth top-right action button on hover */}
+                      <div className="absolute top-4 right-4 w-9 h-9 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/10 opacity-0 transform translate-y-[-6px] group-hover:opacity-100 group-hover:translate-y-0 group-hover:bg-primary transition-all duration-300 shadow-lg shadow-primary/25">
                         <ArrowRight size={16} className="text-white" />
                       </div>
+
                     </Link>
                   </TiltCard>
                 </motion.div>
@@ -510,20 +537,31 @@ export default function HomePage() {
               {products.map(product => {
                 const waLink = `https://wa.me/${waNumber}?text=${encodeURIComponent(`Halo Admin Masamas, saya tertarik untuk memesan produk:\n\n*Nama Produk*: ${product.name}\n*Harga*: Rp ${Number(product.price).toLocaleString('id-ID')}\n\nApakah barang tersebut tersedia? Mohon informasinya.`)}`;
                 return (
-                  <motion.div key={product.id} variants={staggerItem} className="card-premium group flex flex-col justify-between h-full bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition duration-300">
+                  <motion.div
+                    key={product.id}
+                    variants={staggerItem}
+                    className="card-premium group flex flex-col justify-between h-full bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300"
+                  >
                     <div>
                       <Link href={`/products/${product.slug}`}>
-                        <div className="aspect-square bg-gray-100 relative overflow-hidden">
-                          <div className="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full z-10">BARU</div>
+                        <div className="aspect-square bg-gray-50 relative overflow-hidden">
+                          {/* Premium floating BARU tag */}
+                          <div className="absolute top-3 left-3 bg-primary/90 text-white backdrop-blur-sm text-[9px] font-extrabold px-2.5 py-1.5 rounded-lg z-10 border border-white/20 uppercase tracking-widest shadow-md shadow-primary/20">
+                            BARU
+                          </div>
+                          
+                          {/* Soft hover overlay */}
+                          <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none" />
+
                           {product.thumbnail ? (
-                            <img src={product.thumbnail} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            <img src={product.thumbnail} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-gray-300 text-5xl">📦</div>
                           )}
                         </div>
                       </Link>
                       <div className="p-4">
-                        <p className="text-xs text-primary font-bold uppercase tracking-wider mb-1">{product.category.name}</p>
+                        <p className="text-xs text-primary font-extrabold uppercase tracking-wider mb-1">{product.category.name}</p>
                         <Link href={`/products/${product.slug}`}>
                           <h3 className="text-sm font-bold text-charcoal mb-3 line-clamp-2 hover:text-primary transition">{product.name}</h3>
                         </Link>
@@ -537,11 +575,11 @@ export default function HomePage() {
                       <a
                         href={waLink}
                         target="_blank" rel="noopener noreferrer"
-                        className="relative w-full flex items-center justify-center gap-1.5 py-2.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl text-xs font-bold transition shadow-sm overflow-hidden group/wa"
+                        className="relative w-full flex items-center justify-center gap-2 py-3 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl text-xs font-extrabold uppercase tracking-wider transition shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20 hover:scale-[1.01] active:scale-95 duration-200 overflow-hidden group/wa cursor-pointer"
                       >
                         {/* Pulse ring on hover */}
                         <span className="absolute inset-0 bg-[#25D366] rounded-xl opacity-0 group-hover/wa:opacity-100 animate-ping-slow" />
-                        <svg viewBox="0 0 24 24" width={14} height={14} fill="currentColor" className="relative z-10">
+                        <svg viewBox="0 0 24 24" width={15} height={15} fill="currentColor" className="relative z-10">
                           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.458 5.705 1.459h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                         </svg>
                         <span className="relative z-10">Beli via WhatsApp</span>
