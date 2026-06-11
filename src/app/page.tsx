@@ -13,7 +13,28 @@ import {
   useInView,
   useMotionValue,
   useSpring,
+  AnimatePresence,
 } from 'framer-motion';
+
+// ── Slide Animation Variants ──────────────────────────────────────────────────
+const slideVariants = {
+  enter: (dir: number) => ({
+    y: dir > 0 ? '100%' : '-100%',
+    opacity: 0,
+    zIndex: 0
+  }),
+  center: {
+    y: 0,
+    opacity: 1,
+    zIndex: 10
+  },
+  exit: (dir: number) => ({
+    y: dir < 0 ? '100%' : '-100%',
+    opacity: 0,
+    zIndex: 0
+  })
+};
+
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 interface CmsMap {
@@ -149,6 +170,7 @@ export default function HomePage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [whatsapp, setWhatsapp] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [direction, setDirection] = useState(1); // 1 = next/right, -1 = prev/left
 
   // Scroll-trigger refs
   const heroRef = useRef<HTMLElement>(null);
@@ -191,6 +213,7 @@ export default function HomePage() {
   useEffect(() => {
     if (loading) return;
     const interval = setInterval(() => {
+      setDirection(1);
       setCurrentSlide(prev => (prev + 1) % 3);
     }, 5000);
     return () => clearInterval(interval);
@@ -199,21 +222,18 @@ export default function HomePage() {
   const carouselSlides = [
     {
       title: cms.carousel_1_title || 'Bangun Rumah Impian Anda',
-      desc: cms.carousel_1_desc || 'Material berkualitas tinggi langsung dikirim ke proyek Anda dengan garansi mutu.',
-      image: cms.carousel_1_image || 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=1200',
-      action: cms.carousel_1_action || '/products'
+      desc: cms.carousel_1_desc || 'Material berkualitas tinggi langsung dikirim to proyek Anda dengan garansi mutu.',
+      image: cms.carousel_1_image || 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=1200'
     },
     {
       title: cms.carousel_2_title || 'Baja & Besi Bersertifikat SNI',
       desc: cms.carousel_2_desc || 'Ketahanan maksimal untuk konstruksi yang kokoh, tangguh, dan tahan lama.',
-      image: cms.carousel_2_image || 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200',
-      action: cms.carousel_2_action || '/products'
+      image: cms.carousel_2_image || 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200'
     },
     {
       title: cms.carousel_3_title || 'Konsultasi Material Gratis',
       desc: cms.carousel_3_desc || 'Hubungi tim ahli kami sekarang untuk menghitung estimasi kebutuhan proyek Anda.',
-      image: cms.carousel_3_image || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1200',
-      action: cms.carousel_3_action || '/contact'
+      image: cms.carousel_3_image || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1200'
     }
   ];
 
@@ -246,57 +266,85 @@ export default function HomePage() {
           HERO CAROUSEL — parallax background
       ══════════════════════════════════════════════ */}
       <section ref={heroRef} className="bg-charcoal text-white relative flex flex-col">
-        <div className="relative h-[81vh] flex items-center overflow-hidden">
-          {carouselSlides.map((slide, index) => (
-            <div
-              key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-            >
-              {/* Parallax Background */}
-              <motion.div style={{ y: heroParallaxY }} className="absolute inset-0 scale-110">
-                <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-r from-charcoal via-charcoal/80 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 via-transparent to-transparent" />
+        <div className="relative h-[81vh] flex items-center overflow-hidden w-full">
+          
+          {/* Sliding Background Layer */}
+          <div className="absolute inset-0 w-full h-full pointer-events-none">
+            <AnimatePresence initial={false} custom={direction}>
+              <motion.div
+                key={currentSlide}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  y: { type: "tween", duration: 1.4, ease: [0.22, 1, 0.36, 1] },
+                  opacity: { duration: 1.0 }
+                }}
+                className="absolute inset-0 w-full h-full"
+              >
+                {/* Parallax Background with dynamic scale zoom animation */}
+                <motion.div style={{ y: heroParallaxY }} className="absolute inset-0 overflow-hidden w-full h-full">
+                  <motion.img
+                    key={`img-${currentSlide}-${carouselSlides[currentSlide].image}`}
+                    src={carouselSlides[currentSlide].image}
+                    alt={carouselSlides[currentSlide].title}
+                    initial={{ scale: 1.0 }}
+                    animate={{ scale: 1.15 }}
+                    transition={{ duration: 7, ease: "easeOut" }}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-charcoal via-charcoal/80 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 via-transparent to-transparent" />
+                </motion.div>
               </motion.div>
+            </AnimatePresence>
+          </div>
 
-              {/* Slide content — staggered text reveal */}
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center relative z-20">
-                <div className="max-w-2xl">
-                  <motion.h1
-                    animate={index === currentSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 35 }}
-                    transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.22 }}
-                    className="text-5xl lg:text-6xl font-extrabold leading-tight mb-6"
-                  >
-                    {slide.title}
-                  </motion.h1>
-                  <motion.p
-                    animate={index === currentSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 25 }}
-                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.38 }}
-                    className="text-gray-300 text-lg leading-relaxed mb-8 max-w-lg"
-                  >
-                    {slide.desc}
-                  </motion.p>
-                  <motion.div
-                    animate={index === currentSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.52 }}
-                    className="flex flex-col sm:flex-row gap-4"
-                  >
-                    {renderActionButton(slide.action, cms.hero_cta_text || 'Lihat Produk Kami')}
-                    <Link href="/about" className="flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition border border-white/20 text-lg">
-                      Pelajari Lebih Lanjut
-                    </Link>
-                  </motion.div>
-                </div>
-              </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center relative z-20 w-full pointer-events-none">
+            <div className="max-w-2xl pointer-events-auto">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSlide}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <h1 className="text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
+                    {carouselSlides[currentSlide].title}
+                  </h1>
+                  <p className="text-gray-300 text-lg leading-relaxed mb-8 max-w-lg">
+                    {carouselSlides[currentSlide].desc}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Static Buttons (Animate on page load only) */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.6 }}
+                className="flex flex-col sm:flex-row gap-4"
+              >
+                {renderActionButton(cms.hero_cta_action || '/products', cms.hero_cta_text || 'Lihat Produk Kami')}
+                <Link href="/about" className="flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition border border-white/20 text-lg">
+                  Pelajari Lebih Lanjut
+                </Link>
+              </motion.div>
             </div>
-          ))}
+          </div>
 
           {/* Pagination dots (Vertical on the right) */}
           <div className="absolute right-6 sm:right-8 top-1/2 -translate-y-1/2 flex flex-col space-y-3 z-30">
             {carouselSlides.map((_, i) => (
               <button
                 key={i}
-                onClick={() => setCurrentSlide(i)}
+                onClick={() => {
+                  setDirection(i > currentSlide ? 1 : -1);
+                  setCurrentSlide(i);
+                }}
                 className={`w-2.5 transition-all duration-300 rounded-full cursor-pointer ${i === currentSlide ? 'bg-primary h-8' : 'h-2.5 bg-white/40 hover:bg-white/70'}`}
               />
             ))}
