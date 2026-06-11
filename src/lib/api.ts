@@ -20,8 +20,8 @@ export const saveAuth = (token: string, role: string) => {
   localStorage.setItem('role', role);
   // Set cookie for middleware (expires in 1 day)
   const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
-  document.cookie = `token=${token}; path=/; expires=${expires}`;
-  document.cookie = `role=${role}; path=/; expires=${expires}`;
+  document.cookie = `token=${token}; path=/; expires=${expires}; max-age=86400; SameSite=Lax`;
+  document.cookie = `role=${role}; path=/; expires=${expires}; max-age=86400; SameSite=Lax`;
 };
 
 export const clearAuth = () => {

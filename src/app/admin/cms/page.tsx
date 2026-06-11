@@ -90,7 +90,7 @@ export default function AdminCMSPage() {
             <h1 className="text-3xl font-bold text-charcoal">CMS Landing Page</h1>
             <p className="text-gray-500 mt-1">Edit konten halaman utama website</p>
           </div>
-          <button onClick={fetchContents} className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 bg-white rounded-xl text-sm font-semibold hover:bg-gray-50 transition">
+          <button onClick={fetchContents} className="flex items-center gap-2 px-4 py-2.5 border border-slate-300 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition shadow-sm">
             <RefreshCw size={16} /> Muat Ulang
           </button>
         </div>
@@ -104,7 +104,7 @@ export default function AdminCMSPage() {
         {loading ? <div className="text-center py-16 text-gray-400">Memuat konten...</div> : (
           <div className="space-y-8">
             {groups.map(group => (
-              <div key={group} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div key={group} className="bg-slate-100 rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="bg-charcoal text-white px-6 py-4 flex justify-between items-center">
                   <h2 className="font-bold text-lg">{GROUP_LABELS[group] || group}</h2>
                   <button
@@ -132,7 +132,7 @@ export default function AdminCMSPage() {
                               type="tel"
                               value={edits[item.key] ?? item.value}
                               onChange={e => setEdits(prev => ({ ...prev, [item.key]: e.target.value }))}
-                              className="w-full pl-8 pr-4 py-3 border border-[#25D366]/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#25D366]/40 text-sm font-mono"
+                              className="w-full pl-8 pr-4 py-3 border border-[#25D366]/40 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#25D366]/40 text-sm font-mono text-charcoal"
                               placeholder="+62 812 3456 7890"
                             />
                           </div>
@@ -160,7 +160,7 @@ export default function AdminCMSPage() {
                           rows={3}
                           value={edits[item.key] ?? item.value}
                           onChange={e => setEdits(prev => ({ ...prev, [item.key]: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm resize-none"
+                          className="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm resize-none text-charcoal"
                         />
                       ) : item.type === 'image' ? (
                         <div className="space-y-2">
@@ -169,7 +169,7 @@ export default function AdminCMSPage() {
                             type="url"
                             value={edits[item.key] ?? item.value}
                             onChange={e => setEdits(prev => ({ ...prev, [item.key]: e.target.value }))}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"
+                            className="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm text-charcoal"
                             placeholder="URL gambar"
                           />
                         </div>
@@ -178,7 +178,7 @@ export default function AdminCMSPage() {
                           type="text"
                           value={edits[item.key] ?? item.value}
                           onChange={e => setEdits(prev => ({ ...prev, [item.key]: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"
+                          className="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm text-charcoal"
                         />
                       )}
                     </div>

@@ -78,7 +78,7 @@ export default function CategoriesPage() {
           </div>
         ) : (
           <motion.div
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4"
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
@@ -87,14 +87,13 @@ export default function CategoriesPage() {
               <motion.div
                 key={cat.id}
                 variants={staggerItem}
-                whileHover={{ y: -6, transition: { duration: 0.2 } }}
-                className="group relative rounded-2xl overflow-hidden aspect-square bg-charcoal shadow-sm hover:shadow-xl transition-shadow duration-300"
+                className="group relative rounded-xl overflow-hidden aspect-square bg-charcoal shadow-md hover:shadow-xl transition-all duration-300 border border-slate-200/10"
               >
-                <Link href={`/products?category=${cat.slug}`} className="block w-full h-full">
+                <Link href={`/products?category=${cat.slug}`} className="block w-full h-full relative">
                   {cat.image ? (
-                    <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-60" />
+                    <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out opacity-70 group-hover:opacity-85" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-charcoal via-charcoal/95 to-primary/25 flex flex-col items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-700">
+                    <div className="w-full h-full bg-gradient-to-br from-charcoal via-charcoal/95 to-primary/25 flex flex-col items-center justify-center relative overflow-hidden group-hover:scale-110 transition-transform duration-500 ease-out">
                       {/* Blueprint grid lines */}
                       <div className="absolute inset-0 opacity-10" style={{
                         backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
@@ -102,18 +101,23 @@ export default function CategoriesPage() {
                       }} />
                       {/* Glowing ambient light */}
                       <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition-colors" />
-                      <span className="text-5xl drop-shadow-lg relative z-10 animate-pulse">🏗️</span>
+                      <span className="text-4xl drop-shadow-lg relative z-10 animate-pulse">🏗️</span>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-5">
-                    <h3 className="text-white font-bold text-lg leading-tight">{cat.name}</h3>
-                    <div className="flex items-center justify-between mt-2">
-                      <p className="text-gray-300 text-sm">{cat._count.products} Produk</p>
-                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center transform group-hover:translate-x-1 transition-transform">
-                        <ArrowRight size={16} className="text-white" />
-                      </div>
-                    </div>
+                  {/* Overlay shadow */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+                  
+                  {/* Content */}
+                  <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 flex flex-col justify-end translate-y-1.5 group-hover:translate-y-0 transition-transform duration-300">
+                    <span className="px-2 py-0.5 bg-primary/20 border border-primary/30 rounded-full text-[9px] font-bold text-primary w-fit uppercase tracking-wider mb-1.5">
+                      {cat._count.products} Item
+                    </span>
+                    <h3 className="text-white font-extrabold text-sm sm:text-base md:text-lg leading-tight tracking-tight drop-shadow-md">
+                      {cat.name}
+                    </h3>
+                    <p className="text-primary text-xs font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-1">
+                      Lihat Produk <ArrowRight size={12} className="inline-block transform group-hover:translate-x-1 transition-transform" />
+                    </p>
                   </div>
                 </Link>
               </motion.div>

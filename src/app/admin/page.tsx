@@ -39,7 +39,7 @@ export default function AdminDashboardPage() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10 max-w-4xl">
           {cards.map((card, i) => (
-            <Link key={i} href={card.href} className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition group">
+            <Link key={i} href={card.href} className="bg-slate-100 p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-slate-300 transition group">
               <div className={`w-12 h-12 ${card.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition`}>
                 <card.icon size={22} className="text-white" />
               </div>
@@ -53,7 +53,7 @@ export default function AdminDashboardPage() {
         <h2 className="text-xl font-bold text-charcoal mb-5">Menu Admin</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {menuItems.map((item, i) => (
-            <Link key={i} href={item.href} className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-transparent hover:border-primary/20 transition group">
+            <Link key={i} href={item.href} className="bg-slate-100 p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary/30 transition group">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary transition">
                   <item.icon size={22} className="text-primary group-hover:text-white transition" />

@@ -17,43 +17,68 @@ export function middleware(request: NextRequest) {
   // Redirect disabled user routes to homepage
   const isDisabledUserRoute = ['/cart', '/checkout', '/orders', '/payment-upload'].some((route) => pathname.startsWith(route));
   if (isDisabledUserRoute) {
-    return NextResponse.redirect(new URL('/', request.url));
+    const response = NextResponse.redirect(new URL('/', request.url));
+    response.headers.set('x-middleware-cache', 'no-cache');
+    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    return response;
   }
 
   // Redirect disabled admin routes to admin dashboard
   const isDisabledAdminRoute = ['/admin/orders', '/admin/payments', '/admin/users'].some((route) => pathname.startsWith(route));
   if (isDisabledAdminRoute) {
-    return NextResponse.redirect(new URL('/admin', request.url));
+    const response = NextResponse.redirect(new URL('/admin', request.url));
+    response.headers.set('x-middleware-cache', 'no-cache');
+    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    return response;
   }
 
   // Allow public routes always
   const isPublic = PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith('/products') || pathname.startsWith('/categories')
   );
-  if (isPublic) return NextResponse.next();
+  if (isPublic) {
+    const response = NextResponse.next();
+    response.headers.set('x-middleware-cache', 'no-cache');
+    return response;
+  }
 
   // Admin routes — must be ADMIN
   const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
   if (isAdminRoute) {
     if (!token) {
-      return NextResponse.redirect(new URL('/login?redirect=' + pathname, request.url));
+      const response = NextResponse.redirect(new URL('/login?redirect=' + pathname, request.url));
+      response.headers.set('x-middleware-cache', 'no-cache');
+      response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+      return response;
     }
     if (role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/?error=unauthorized', request.url));
+      const response = NextResponse.redirect(new URL('/?error=unauthorized', request.url));
+      response.headers.set('x-middleware-cache', 'no-cache');
+      response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+      return response;
     }
-    return NextResponse.next();
+    const response = NextResponse.next();
+    response.headers.set('x-middleware-cache', 'no-cache');
+    return response;
   }
 
   // Private user routes — must be logged in
   const isPrivate = PRIVATE_ROUTES.some((route) => pathname.startsWith(route));
   if (isPrivate) {
     if (!token) {
-      return NextResponse.redirect(new URL('/login?redirect=' + pathname, request.url));
+      const response = NextResponse.redirect(new URL('/login?redirect=' + pathname, request.url));
+      response.headers.set('x-middleware-cache', 'no-cache');
+      response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+      return response;
     }
-    return NextResponse.next();
+    const response = NextResponse.next();
+    response.headers.set('x-middleware-cache', 'no-cache');
+    return response;
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  response.headers.set('x-middleware-cache', 'no-cache');
+  return response;
 }
 
 export const config = {
