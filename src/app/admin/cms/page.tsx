@@ -477,55 +477,6 @@ export default function AdminCMSPage() {
                     ))}
                   </div>
                 )}
-
-                {/* ── Hero Settings (merged into Carousel section) ── */}
-                {contents.filter(c => c.group === 'hero').length > 0 && (
-                  <div className="mt-6 pt-6 border-t border-slate-200">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-bold text-charcoal text-sm">⚙️ Pengaturan Hero (Tombol & Teks di Atas Carousel)</h3>
-                      <button
-                        onClick={() => handleSave('hero')}
-                        disabled={saving}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-primary rounded-lg text-xs font-bold text-white hover:bg-primary-dark transition disabled:opacity-50 cursor-pointer"
-                      >
-                        <Save size={13} /> Simpan Hero
-                      </button>
-                    </div>
-                    <div className="space-y-4">
-                      {contents.filter(c => c.group === 'hero').map(item => (
-                        <div key={item.key}>
-                          <label className="block text-xs font-semibold text-charcoal mb-1.5">{item.label}</label>
-                          {item.type === 'textarea' ? (
-                            <textarea
-                              rows={2}
-                              value={edits[item.key] ?? item.value}
-                              onChange={e => setEdits(prev => ({ ...prev, [item.key]: e.target.value }))}
-                              className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm resize-none text-charcoal"
-                            />
-                          ) : item.type === 'image' ? (
-                            <div className="space-y-2">
-                              {edits[item.key] && <img src={edits[item.key]} alt="" className="h-20 object-contain rounded-lg border" />}
-                              <input
-                                type="url"
-                                value={edits[item.key] ?? item.value}
-                                onChange={e => setEdits(prev => ({ ...prev, [item.key]: e.target.value }))}
-                                className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm text-charcoal"
-                                placeholder="URL gambar"
-                              />
-                            </div>
-                          ) : (
-                            <input
-                              type="text"
-                              value={edits[item.key] ?? item.value}
-                              onChange={e => setEdits(prev => ({ ...prev, [item.key]: e.target.value }))}
-                              className="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm text-charcoal"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
