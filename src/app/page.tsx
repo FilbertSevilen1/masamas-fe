@@ -195,6 +195,10 @@ export default function HomePage() {
   const whyInView        = useInView(whyRef,        { once: true, margin: '-80px' as `${number}px` });
   const ctaInView        = useInView(ctaRef,        { once: true, margin: '-80px' as `${number}px` });
 
+  // Dynamic carousel and gallery from dedicated API endpoints
+  const [carouselSlides, setCarouselSlides] = useState<{ id: number; title: string; desc: string; image: string; position: number }[]>([]);
+  const [galleryItems, setGalleryItems] = useState<{ id: number; title: string; image: string; position: number }[]>([]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsAdmin(localStorage.getItem('role') === 'ADMIN');
@@ -206,45 +210,20 @@ export default function HomePage() {
       }).catch(() => {}),
       api.get('/categories').then(r => setCategories(r.data.slice(0, 8))).catch(() => {}),
       api.get('/products?limit=8&sort=createdAt').then(r => setProducts(r.data.products)).catch(() => {}),
+      api.get('/cms/banners').then(r => setCarouselSlides(r.data)).catch(() => {}),
+      api.get('/cms/gallery').then(r => setGalleryItems(r.data)).catch(() => {}),
     ]).finally(() => setLoading(false));
   }, []);
 
   // Autoplay carousel
   useEffect(() => {
-    if (loading) return;
+    if (loading || carouselSlides.length === 0) return;
     const interval = setInterval(() => {
       setDirection(1);
-      setCurrentSlide(prev => (prev + 1) % 3);
+      setCurrentSlide(prev => (prev + 1) % carouselSlides.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [loading]);
-
-  const carouselSlides = [
-    {
-      title: cms.carousel_1_title || 'Bangun Rumah Impian Anda',
-      desc: cms.carousel_1_desc || 'Material berkualitas tinggi langsung dikirim to proyek Anda dengan garansi mutu.',
-      image: cms.carousel_1_image || 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=1200'
-    },
-    {
-      title: cms.carousel_2_title || 'Baja & Besi Bersertifikat SNI',
-      desc: cms.carousel_2_desc || 'Ketahanan maksimal untuk konstruksi yang kokoh, tangguh, dan tahan lama.',
-      image: cms.carousel_2_image || 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200'
-    },
-    {
-      title: cms.carousel_3_title || 'Konsultasi Material Gratis',
-      desc: cms.carousel_3_desc || 'Hubungi tim ahli kami sekarang untuk menghitung estimasi kebutuhan proyek Anda.',
-      image: cms.carousel_3_image || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1200'
-    }
-  ];
-
-  const galleryItems = [
-    { image: cms.gallery_1_image || 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?q=80&w=600', title: cms.gallery_1_title || 'Proyek Perumahan Elite' },
-    { image: cms.gallery_2_image || 'https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?q=80&w=600', title: cms.gallery_2_title || 'Konstruksi Jembatan Baja' },
-    { image: cms.gallery_3_image || 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=600', title: cms.gallery_3_title || 'Pabrik Industri Modern' },
-    { image: cms.gallery_4_image || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=600', title: cms.gallery_4_title || 'Pembangunan Ruko 3 Lantai' },
-    { image: cms.gallery_5_image || 'https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?q=80&w=600', title: cms.gallery_5_title || 'Gudang Logistik Skala Besar' },
-    { image: cms.gallery_6_image || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600', title: cms.gallery_6_title || 'Renovasi Rumah Tinggal' },
-  ];
+  }, [loading, carouselSlides.length]);
 
   const cleanNum = whatsapp.replace(/[^0-9]/g, '');
   const waNumber = cleanNum.startsWith('0') ? `62${cleanNum.slice(1)}` : cleanNum;
@@ -270,6 +249,7 @@ export default function HomePage() {
           
           {/* Sliding Background Layer */}
           <div className="absolute inset-0 w-full h-full pointer-events-none">
+            {carouselSlides.length > 0 && (
             <AnimatePresence initial={false} custom={direction}>
               <motion.div
                 key={currentSlide}
@@ -287,9 +267,9 @@ export default function HomePage() {
                 {/* Parallax Background with dynamic scale zoom animation */}
                 <motion.div style={{ y: heroParallaxY }} className="absolute inset-0 overflow-hidden w-full h-full">
                   <motion.img
-                    key={`img-${currentSlide}-${carouselSlides[currentSlide].image}`}
-                    src={carouselSlides[currentSlide].image}
-                    alt={carouselSlides[currentSlide].title}
+                    key={`img-${currentSlide}-${carouselSlides[currentSlide]?.image}`}
+                    src={carouselSlides[currentSlide]?.image}
+                    alt={carouselSlides[currentSlide]?.title}
                     initial={{ scale: 1.0 }}
                     animate={{ scale: 1.15 }}
                     transition={{ duration: 7, ease: "easeOut" }}
@@ -300,6 +280,7 @@ export default function HomePage() {
                 </motion.div>
               </motion.div>
             </AnimatePresence>
+            )}
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center relative z-20 w-full pointer-events-none">
@@ -313,10 +294,10 @@ export default function HomePage() {
                   transition={{ duration: 0.6 }}
                 >
                   <h1 className="text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-                    {carouselSlides[currentSlide].title}
+                    {carouselSlides[currentSlide]?.title}
                   </h1>
                   <p className="text-gray-300 text-lg leading-relaxed mb-8 max-w-lg">
-                    {carouselSlides[currentSlide].desc}
+                    {carouselSlides[currentSlide]?.desc}
                   </p>
                 </motion.div>
               </AnimatePresence>

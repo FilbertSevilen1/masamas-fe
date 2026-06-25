@@ -8,14 +8,11 @@ import api from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ZoomIn, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
-interface CmsMap {
-  gallery_1_title?: string; gallery_1_image?: string;
-  gallery_2_title?: string; gallery_2_image?: string;
-  gallery_3_title?: string; gallery_3_image?: string;
-  gallery_4_title?: string; gallery_4_image?: string;
-  gallery_5_title?: string; gallery_5_image?: string;
-  gallery_6_title?: string; gallery_6_image?: string;
-  [key: string]: string | undefined;
+interface GalleryItem {
+  id: number;
+  title: string;
+  image: string;
+  position: number;
 }
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -34,25 +31,16 @@ const itemVariants = {
 };
 
 export default function GalleryPage() {
-  const [cms, setCms] = useState<CmsMap>({});
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    api.get('/cms/map')
-      .then(res => setCms(res.data))
+    api.get('/cms/gallery')
+      .then(res => setGalleryItems(res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
-
-  const galleryItems = [
-    { image: cms.gallery_1_image || 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?q=80&w=600', title: cms.gallery_1_title || 'Proyek Perumahan Elite' },
-    { image: cms.gallery_2_image || 'https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?q=80&w=600', title: cms.gallery_2_title || 'Konstruksi Jembatan Baja' },
-    { image: cms.gallery_3_image || 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=600', title: cms.gallery_3_title || 'Pabrik Industri Modern' },
-    { image: cms.gallery_4_image || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=600', title: cms.gallery_4_title || 'Pembangunan Ruko 3 Lantai' },
-    { image: cms.gallery_5_image || 'https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?q=80&w=600', title: cms.gallery_5_title || 'Gudang Logistik Skala Besar' },
-    { image: cms.gallery_6_image || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600', title: cms.gallery_6_title || 'Renovasi Rumah Tinggal' },
-  ];
 
   const nextImage = () => {
     if (lightboxIndex !== null) {
