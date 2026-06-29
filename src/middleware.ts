@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Public routes — no auth required
-const PUBLIC_ROUTES = ['/', '/login', '/register', '/products', '/categories', '/about', '/contact'];
+const PUBLIC_ROUTES = ['/', '/login', '/register', '/products', '/categories', '/about', '/contact', '/cart'];
 
 // Admin-only routes
 const ADMIN_ROUTES = ['/admin'];
 
 // User-auth routes (logged in, but not necessarily admin)
-const PRIVATE_ROUTES = ['/cart', '/checkout', '/orders', '/payment-upload', '/dashboard'];
+const PRIVATE_ROUTES = ['/checkout', '/orders', '/payment-upload', '/dashboard'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
