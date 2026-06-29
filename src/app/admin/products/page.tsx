@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import Pagination from '@/components/common/Pagination';
-import { Plus, Edit2, Trash2, X, Save, Image, Search, Filter, RotateCcw } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Save, Image, Search, Filter, RotateCcw, Package } from 'lucide-react';
 
 interface Category { id: number; name: string; slug: string }
 interface Product {
@@ -278,7 +278,7 @@ export default function AdminProductsPage() {
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-200 shrink-0">
-                        {p.thumbnail ? <img src={p.thumbnail} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 text-xl">📦</div>}
+                        {p.thumbnail ? <img src={p.thumbnail} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><Package size={20} /></div>}
                       </div>
                       <span className="font-medium text-charcoal line-clamp-1">{p.name}</span>
                     </div>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import api from '@/lib/api';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
-import { Save, RefreshCw, Plus, Trash2, ChevronUp, ChevronDown, Pencil, X, GripVertical, Image as ImageIcon, Images } from 'lucide-react';
+import { Save, RefreshCw, Plus, Trash2, ChevronUp, ChevronDown, Pencil, X, GripVertical, Image as ImageIcon, Images, CheckCircle } from 'lucide-react';
 
 interface ContentItem {
   id: number; key: string; value: string; label: string; type: string; group: string;
@@ -416,8 +416,9 @@ export default function AdminCMSPage() {
         </div>
 
         {saved && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-5 py-3 rounded-xl mb-6 font-medium text-sm">
-            ✅ Konten berhasil disimpan!
+          <div className="bg-green-50 border border-green-200 text-green-700 px-5 py-3 rounded-xl mb-6 font-medium text-sm flex items-center gap-2">
+            <CheckCircle size={18} className="text-green-600 shrink-0" />
+            <span>Konten berhasil disimpan!</span>
           </div>
         )}
 

@@ -22,7 +22,9 @@ import {
   MapPin,
   DollarSign,
   Phone,
-  Filter
+  Filter,
+  Lock,
+  Info
 } from 'lucide-react';
 
 interface Order {
@@ -500,7 +502,10 @@ export default function AdminOrdersPage() {
                 }`}>
                   <AlertCircle size={20} className="shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-bold text-sm">🔒 Detail Pesanan Terkunci</h4>
+                    <h4 className="font-bold text-sm flex items-center gap-1.5">
+                      <Lock size={16} className="shrink-0" />
+                      <span>Detail Pesanan Terkunci</span>
+                    </h4>
                     <p className="text-xs mt-1 leading-relaxed">
                       {selectedOrder.shippingStatus === 'DELIVERED' && 'Pesanan ini telah sukses terkirim dan diselesaikan secara permanen. Status tidak dapat diubah lagi.'}
                       {selectedOrder.shippingStatus === 'CANCELLED' && 'Pesanan ini telah dibatalkan. Tindakan lebih lanjut telah dinonaktifkan.'}
@@ -587,8 +592,9 @@ export default function AdminOrdersPage() {
                     >
                       {PAYMENT_STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
-                    <p className="text-[10px] text-orange-700 font-bold bg-orange-50 p-2.5 border border-orange-200 rounded-lg mt-2 leading-tight">
-                      ℹ️ Status pembayaran hanya dapat diubah/diverifikasi melalui menu khusus <strong>"Verifikasi Pembayaran"</strong> demi kepatuhan finansial & keamanan data.
+                    <p className="text-[10px] text-orange-700 font-bold bg-orange-50 p-2.5 border border-orange-200 rounded-lg mt-2 leading-tight flex items-start gap-1.5">
+                      <Info size={14} className="shrink-0 mt-0.5" />
+                      <span>Status pembayaran hanya dapat diubah/diverifikasi melalui menu khusus <strong>"Verifikasi Pembayaran"</strong> demi kepatuhan finansial & keamanan data.</span>
                     </p>
                   </div>
 
@@ -644,11 +650,13 @@ export default function AdminOrdersPage() {
                     </select>
                     {isOrderLocked ? (
                       <p className="text-[10px] text-indigo-700 font-bold bg-indigo-50 p-2 border border-indigo-200 rounded-lg mt-2 flex items-center gap-1.5">
-                        🔒 Pesanan telah diselesaikan/dibatalkan & dikunci secara permanen.
+                        <Lock size={12} className="shrink-0" />
+                        <span>Pesanan telah diselesaikan/dibatalkan & dikunci secara permanen.</span>
                       </p>
                     ) : selectedOrder.paymentStatus !== 'APPROVED' ? (
-                      <p className="text-[10px] text-red-700 font-bold bg-red-50 p-2.5 border border-red-200 rounded-lg mt-2 leading-tight">
-                        ⚠️ Status pengiriman tidak dapat diubah sebelum pembayaran disetujui (APPROVED).
+                      <p className="text-[10px] text-red-700 font-bold bg-red-50 p-2.5 border border-red-200 rounded-lg mt-2 leading-tight flex items-start gap-1.5">
+                        <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                        <span>Status pengiriman tidak dapat diubah sebelum pembayaran disetujui (APPROVED).</span>
                       </p>
                     ) : null}
                   </div>
@@ -753,8 +761,9 @@ export default function AdminOrdersPage() {
               {!isOrderLocked && (
                 <div className="flex items-center gap-3 flex-wrap">
                   {modalPaymentStatus !== 'APPROVED' && (
-                    <span className="text-xs text-red-500 font-bold bg-red-50 border border-red-200 px-3 py-2 rounded-xl flex items-center gap-1">
-                      ⚠️ Pembayaran harus disetujui terlebih dahulu
+                    <span className="text-xs text-red-500 font-bold bg-red-50 border border-red-200 px-3 py-2 rounded-xl flex items-center gap-1.5">
+                      <AlertTriangle size={14} className="shrink-0" />
+                      <span>Pembayaran harus disetujui terlebih dahulu</span>
                     </span>
                   )}
                   <button

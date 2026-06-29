@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import Pagination from '@/components/common/Pagination';
-import { Plus, Edit2, Trash2, X, Save, Image, Search, Filter, RotateCcw } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Save, Image, Search, Filter, RotateCcw, FolderOpen } from 'lucide-react';
 
 interface Category { id: number; name: string; slug: string; image: string | null; _count: { products: number } }
 
@@ -188,7 +188,7 @@ export default function AdminCategoriesPage() {
               {paginatedCategories.map(cat => (
                 <div key={cat.id} className="bg-slate-100 rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-md hover:border-slate-300 transition">
                   <div className="aspect-video bg-slate-200 overflow-hidden">
-                    {cat.image ? <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 text-5xl">🏗️</div>}
+                    {cat.image ? <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><FolderOpen size={48} /></div>}
                   </div>
                   <div className="p-5">
                     <h3 className="text-lg font-bold text-charcoal">{cat.name}</h3>
