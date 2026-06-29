@@ -105,6 +105,26 @@ export default function AdminCMSPage() {
     });
   };
 
+  const showConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    type: 'danger' | 'warning' | 'info' | 'success' = 'danger',
+    confirmText = 'Ya',
+    cancelText = 'Batal'
+  ) => {
+    setDialog({
+      isOpen: true,
+      type,
+      title,
+      message,
+      confirmText,
+      cancelText,
+      showCancel: true,
+      onConfirm,
+    });
+  };
+
   const showSuccess = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -134,58 +154,83 @@ export default function AdminCMSPage() {
   };
 
   // ── SiteContent save ────────────────────────────────────────────────────────
-  const handleSave = async (group: string) => {
-    setSaving(true);
-    try {
-      const groupItems = contents.filter(c => c.group === group);
-      const updates = groupItems.map(c => ({ key: c.key, value: edits[c.key] ?? c.value }));
-      await api.put('/cms/bulk', updates);
-      showSuccess();
-    } catch {
-      showAlert('Gagal', 'Gagal menyimpan konten', 'danger');
-    } finally {
-      setSaving(false);
-    }
+  const handleSave = (group: string) => {
+    const groupName = GROUP_LABELS[group] || group;
+    showConfirm(
+      'Simpan Perubahan',
+      `Apakah Anda yakin ingin menyimpan semua perubahan pada bagian "${groupName}"?`,
+      async () => {
+        setSaving(true);
+        try {
+          const groupItems = contents.filter(c => c.group === group);
+          const updates = groupItems.map(c => ({ key: c.key, value: edits[c.key] ?? c.value }));
+          await api.put('/cms/bulk', updates);
+          showSuccess();
+        } catch {
+          showAlert('Gagal', 'Gagal menyimpan konten', 'danger');
+        } finally {
+          setSaving(false);
+        }
+      },
+      'warning',
+      'Simpan'
+    );
   };
 
   // ── Banner CRUD ─────────────────────────────────────────────────────────────
-  const handleCreateBanner = async () => {
+  const handleCreateBanner = () => {
     if (!bannerForm.title.trim()) { showAlert('Peringatan', 'Judul banner harus diisi', 'info'); return; }
-    setSaving(true);
-    try {
-      await api.post('/cms/banners', bannerForm);
-      setShowBannerForm(false);
-      setBannerForm({ title: '', desc: '', image: '' });
-      const res = await api.get('/cms/banners');
-      setBanners(res.data);
-      showSuccess();
-    } catch {
-      showAlert('Gagal', 'Gagal menambah banner', 'danger');
-    } finally {
-      setSaving(false);
-    }
+    showConfirm(
+      'Tambah Banner Baru',
+      `Apakah Anda yakin ingin menambahkan banner baru "${bannerForm.title}"?`,
+      async () => {
+        setSaving(true);
+        try {
+          await api.post('/cms/banners', bannerForm);
+          setShowBannerForm(false);
+          setBannerForm({ title: '', desc: '', image: '' });
+          const res = await api.get('/cms/banners');
+          setBanners(res.data);
+          showSuccess();
+        } catch {
+          showAlert('Gagal', 'Gagal menambah banner', 'danger');
+        } finally {
+          setSaving(false);
+        }
+      },
+      'warning',
+      'Tambah'
+    );
   };
 
-  const handleUpdateBanner = async () => {
+  const handleUpdateBanner = () => {
     if (!editingBanner) return;
-    setSaving(true);
-    try {
-      await api.put(`/cms/banners/${editingBanner.id}`, {
-        title: bannerForm.title,
-        desc: bannerForm.desc,
-        image: bannerForm.image,
-      });
-      setEditingBanner(null);
-      setShowBannerForm(false);
-      setBannerForm({ title: '', desc: '', image: '' });
-      const res = await api.get('/cms/banners');
-      setBanners(res.data);
-      showSuccess();
-    } catch {
-      showAlert('Gagal', 'Gagal memperbarui banner', 'danger');
-    } finally {
-      setSaving(false);
-    }
+    showConfirm(
+      'Simpan Perubahan Banner',
+      `Apakah Anda yakin ingin menyimpan perubahan pada banner "${editingBanner.title}"?`,
+      async () => {
+        setSaving(true);
+        try {
+          await api.put(`/cms/banners/${editingBanner.id}`, {
+            title: bannerForm.title,
+            desc: bannerForm.desc,
+            image: bannerForm.image,
+          });
+          setEditingBanner(null);
+          setShowBannerForm(false);
+          setBannerForm({ title: '', desc: '', image: '' });
+          const res = await api.get('/cms/banners');
+          setBanners(res.data);
+          showSuccess();
+        } catch {
+          showAlert('Gagal', 'Gagal memperbarui banner', 'danger');
+        } finally {
+          setSaving(false);
+        }
+      },
+      'warning',
+      'Simpan'
+    );
   };
 
   const handleDeleteBanner = (banner: BannerItem) => {
@@ -234,42 +279,58 @@ export default function AdminCMSPage() {
   };
 
   // ── Gallery CRUD ────────────────────────────────────────────────────────────
-  const handleCreateGallery = async () => {
+  const handleCreateGallery = () => {
     if (!galleryForm.title.trim()) { showAlert('Peringatan', 'Judul foto harus diisi', 'info'); return; }
-    setSaving(true);
-    try {
-      await api.post('/cms/gallery', galleryForm);
-      setShowGalleryForm(false);
-      setGalleryForm({ title: '', image: '' });
-      const res = await api.get('/cms/gallery');
-      setGallery(res.data);
-      showSuccess();
-    } catch {
-      showAlert('Gagal', 'Gagal menambah foto galeri', 'danger');
-    } finally {
-      setSaving(false);
-    }
+    showConfirm(
+      'Tambah Foto Galeri',
+      `Apakah Anda yakin ingin menambahkan foto baru "${galleryForm.title}" ke galeri?`,
+      async () => {
+        setSaving(true);
+        try {
+          await api.post('/cms/gallery', galleryForm);
+          setShowGalleryForm(false);
+          setGalleryForm({ title: '', image: '' });
+          const res = await api.get('/cms/gallery');
+          setGallery(res.data);
+          showSuccess();
+        } catch {
+          showAlert('Gagal', 'Gagal menambah foto galeri', 'danger');
+        } finally {
+          setSaving(false);
+        }
+      },
+      'warning',
+      'Tambah'
+    );
   };
 
-  const handleUpdateGallery = async () => {
+  const handleUpdateGallery = () => {
     if (!editingGallery) return;
-    setSaving(true);
-    try {
-      await api.put(`/cms/gallery/${editingGallery.id}`, {
-        title: galleryForm.title,
-        image: galleryForm.image,
-      });
-      setEditingGallery(null);
-      setShowGalleryForm(false);
-      setGalleryForm({ title: '', image: '' });
-      const res = await api.get('/cms/gallery');
-      setGallery(res.data);
-      showSuccess();
-    } catch {
-      showAlert('Gagal', 'Gagal memperbarui foto galeri', 'danger');
-    } finally {
-      setSaving(false);
-    }
+    showConfirm(
+      'Simpan Perubahan Galeri',
+      `Apakah Anda yakin ingin menyimpan perubahan pada foto galeri "${editingGallery.title}"?`,
+      async () => {
+        setSaving(true);
+        try {
+          await api.put(`/cms/gallery/${editingGallery.id}`, {
+            title: galleryForm.title,
+            image: galleryForm.image,
+          });
+          setEditingGallery(null);
+          setShowGalleryForm(false);
+          setGalleryForm({ title: '', image: '' });
+          const res = await api.get('/cms/gallery');
+          setGallery(res.data);
+          showSuccess();
+        } catch {
+          showAlert('Gagal', 'Gagal memperbarui foto galeri', 'danger');
+        } finally {
+          setSaving(false);
+        }
+      },
+      'warning',
+      'Simpan'
+    );
   };
 
   const handleDeleteGallery = (photo: GalleryItem) => {

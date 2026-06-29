@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import Link from 'next/link';
 import Pagination from '@/components/common/Pagination';
 import { 
@@ -80,6 +81,53 @@ export default function AdminOrdersPage() {
   const [deliveryProof, setDeliveryProof] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Dialog State
+  const [dialog, setDialog] = useState<{
+    isOpen: boolean;
+    type?: 'danger' | 'warning' | 'info' | 'success';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    showCancel?: boolean;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
+
+  const showConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    type: 'danger' | 'warning' | 'info' | 'success' = 'danger',
+    confirmText = 'Ya',
+    cancelText = 'Batal'
+  ) => {
+    setDialog({
+      isOpen: true,
+      type,
+      title,
+      message,
+      confirmText,
+      cancelText,
+      showCancel: true,
+      onConfirm,
+    });
+  };
+
+  const showAlert = (title: string, message: string, type: 'danger' | 'success' | 'info' = 'danger') => {
+    setDialog({
+      isOpen: true,
+      type,
+      title,
+      message,
+      confirmText: 'OK',
+      showCancel: false,
+    });
+  };
+
   // Snackbar
   const [snackbar, setSnackbar] = useState({
     message: '',
@@ -128,58 +176,74 @@ export default function AdminOrdersPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSaveDetail = async () => {
+  const handleSaveDetail = () => {
     if (!selectedOrder) return;
-    setIsSaving(true);
-    try {
-      await api.patch(`/orders/${selectedOrder.id}/status`, {
-        shippingStatus: modalShippingStatus,
-        deliveryProof: deliveryProof,
-        deliveryNote: deliveryNote
-      });
-
-      // Update local state
-      setOrders(prev => prev.map(o => o.id === selectedOrder.id ? {
-        ...o,
-        shippingStatus: modalShippingStatus,
-        deliveryProof: deliveryProof,
-        deliveryNote: deliveryNote
-      } : o));
-
-      triggerSnackbar(`Pesanan #${selectedOrder.id} berhasil diperbarui!`, 'success');
-      setSelectedOrder(null);
-    } catch {
-      triggerSnackbar('Gagal menyimpan pembaruan pesanan', 'error');
-    } finally {
-      setIsSaving(false);
-    }
+    showConfirm(
+      'Simpan Perubahan Pesanan',
+      `Apakah Anda yakin ingin menyimpan semua perubahan detail dan pengiriman untuk pesanan #${selectedOrder.id}?`,
+      async () => {
+        setIsSaving(true);
+        try {
+          await api.patch(`/orders/${selectedOrder.id}/status`, {
+            shippingStatus: modalShippingStatus,
+            deliveryProof: deliveryProof,
+            deliveryNote: deliveryNote
+          });
+    
+          // Update local state
+          setOrders(prev => prev.map(o => o.id === selectedOrder.id ? {
+            ...o,
+            shippingStatus: modalShippingStatus,
+            deliveryProof: deliveryProof,
+            deliveryNote: deliveryNote
+          } : o));
+    
+          triggerSnackbar(`Pesanan #${selectedOrder.id} berhasil diperbarui!`, 'success');
+          setSelectedOrder(null);
+        } catch {
+          triggerSnackbar('Gagal menyimpan pembaruan pesanan', 'error');
+        } finally {
+          setIsSaving(false);
+        }
+      },
+      'warning',
+      'Simpan'
+    );
   };
 
-  const handleSelesaikanPesanan = async () => {
+  const handleSelesaikanPesanan = () => {
     if (!selectedOrder) return;
-    setIsSaving(true);
-    try {
-      await api.patch(`/orders/${selectedOrder.id}/status`, {
-        shippingStatus: 'DELIVERED',
-        deliveryProof: deliveryProof,
-        deliveryNote: deliveryNote
-      });
-
-      // Update local state
-      setOrders(prev => prev.map(o => o.id === selectedOrder.id ? {
-        ...o,
-        shippingStatus: 'DELIVERED',
-        deliveryProof: deliveryProof,
-        deliveryNote: deliveryNote
-      } : o));
-
-      triggerSnackbar(`Pesanan #${selectedOrder.id} berhasil diselesaikan & dikunci secara permanen!`, 'success');
-      setSelectedOrder(null);
-    } catch {
-      triggerSnackbar('Gagal menyelesaikan pesanan', 'error');
-    } finally {
-      setIsSaving(false);
-    }
+    showConfirm(
+      'Selesaikan Pesanan',
+      `Apakah Anda yakin ingin menyelesaikan pesanan #${selectedOrder.id}? Tindakan ini akan menandai pengiriman sukses/terkirim dan pesanan akan dikunci secara permanen.`,
+      async () => {
+        setIsSaving(true);
+        try {
+          await api.patch(`/orders/${selectedOrder.id}/status`, {
+            shippingStatus: 'DELIVERED',
+            deliveryProof: deliveryProof,
+            deliveryNote: deliveryNote
+          });
+    
+          // Update local state
+          setOrders(prev => prev.map(o => o.id === selectedOrder.id ? {
+            ...o,
+            shippingStatus: 'DELIVERED',
+            deliveryProof: deliveryProof,
+            deliveryNote: deliveryNote
+          } : o));
+    
+          triggerSnackbar(`Pesanan #${selectedOrder.id} berhasil diselesaikan & dikunci secara permanen!`, 'success');
+          setSelectedOrder(null);
+        } catch {
+          triggerSnackbar('Gagal menyelesaikan pesanan', 'error');
+        } finally {
+          setIsSaving(false);
+        }
+      },
+      'success',
+      'Ya, Selesaikan'
+    );
   };
 
   // Reset to page 1 when any filter changes
@@ -737,6 +801,18 @@ export default function AdminOrdersPage() {
           </div>
         </div>
       )}
+      
+      <ConfirmDialog
+        isOpen={dialog.isOpen}
+        type={dialog.type}
+        title={dialog.title}
+        message={dialog.message}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        showCancel={dialog.showCancel}
+        onConfirm={dialog.onConfirm}
+        onClose={() => setDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </main>
   );
 }

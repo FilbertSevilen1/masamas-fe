@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import Pagination from '@/components/common/Pagination';
 import { 
   CheckCircle, 
@@ -52,6 +53,53 @@ export default function AdminPaymentsPage() {
   const [selected, setSelected] = useState<Payment | null>(null);
   const [note, setNote] = useState('');
   const [updating, setUpdating] = useState(false);
+  
+  // Dialog State
+  const [dialog, setDialog] = useState<{
+    isOpen: boolean;
+    type?: 'danger' | 'warning' | 'info' | 'success';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    showCancel?: boolean;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
+
+  const showConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    type: 'danger' | 'warning' | 'info' | 'success' = 'danger',
+    confirmText = 'Ya',
+    cancelText = 'Batal'
+  ) => {
+    setDialog({
+      isOpen: true,
+      type,
+      title,
+      message,
+      confirmText,
+      cancelText,
+      showCancel: true,
+      onConfirm,
+    });
+  };
+
+  const showAlert = (title: string, message: string, type: 'danger' | 'success' | 'info' = 'danger') => {
+    setDialog({
+      isOpen: true,
+      type,
+      title,
+      message,
+      confirmText: 'OK',
+      showCancel: false,
+    });
+  };
 
   // Search & Filter
   const [search, setSearch] = useState('');
@@ -96,26 +144,61 @@ export default function AdminPaymentsPage() {
     setNote(payment.adminNote || '');
   };
 
-  const handleUpdate = async (status: string) => {
+  const handleUpdate = (status: string) => {
     if (!selected) return;
-    setUpdating(true);
-    try {
-      await api.patch(`/payments/${selected.id}/status`, { status, adminNote: note });
-      
-      const successMessages: Record<string, string> = {
-        APPROVED: `Pembayaran pesanan #${selected.order.id} berhasil disetujui!`,
-        RETURNED: `Pembayaran pesanan #${selected.order.id} dikembalikan untuk diupload ulang.`,
-        REJECTED: `Pembayaran pesanan #${selected.order.id} ditolak.`,
-      };
-      
-      triggerSnackbar(successMessages[status] || 'Status berhasil diperbarui', 'success');
-      setSelected(null);
-      fetchPayments();
-    } catch { 
-      triggerSnackbar('Gagal memperbarui status verifikasi pembayaran', 'error'); 
-    } finally { 
-      setUpdating(false); 
+    
+    let title = '';
+    let message = '';
+    let confirmText = '';
+    let type: 'danger' | 'warning' | 'info' | 'success' = 'warning';
+    
+    if (status === 'APPROVED') {
+      title = 'Setujui Pembayaran';
+      message = `Apakah Anda yakin ingin menyetujui pembayaran untuk pesanan #${selected.order.id} sebesar Rp ${Number(selected.order.totalPrice).toLocaleString('id-ID')}?`;
+      confirmText = 'Ya, Setujui';
+      type = 'success';
+    } else if (status === 'RETURNED') {
+      title = 'Minta Upload Ulang';
+      message = `Apakah Anda yakin ingin meminta pelanggan pesanan #${selected.order.id} untuk mengunggah ulang bukti transfer?`;
+      confirmText = 'Ya, Minta';
+      type = 'warning';
+    } else if (status === 'REJECTED') {
+      title = 'Tolak Pembayaran';
+      message = `Apakah Anda yakin ingin menolak pembayaran untuk pesanan #${selected.order.id}? Tindakan ini akan membatalkan status pembayaran.`;
+      confirmText = 'Ya, Tolak';
+      type = 'danger';
+    } else {
+      title = 'Konfirmasi Perubahan';
+      message = 'Apakah Anda yakin ingin memperbarui status pembayaran ini?';
+      confirmText = 'Ya, Ubah';
     }
+    
+    showConfirm(
+      title,
+      message,
+      async () => {
+        setUpdating(true);
+        try {
+          await api.patch(`/payments/${selected.id}/status`, { status, adminNote: note });
+          
+          const successMessages: Record<string, string> = {
+            APPROVED: `Pembayaran pesanan #${selected.order.id} berhasil disetujui!`,
+            RETURNED: `Pembayaran pesanan #${selected.order.id} dikembalikan untuk diupload ulang.`,
+            REJECTED: `Pembayaran pesanan #${selected.order.id} ditolak.`,
+          };
+          
+          triggerSnackbar(successMessages[status] || 'Status berhasil diperbarui', 'success');
+          setSelected(null);
+          fetchPayments();
+        } catch { 
+          triggerSnackbar('Gagal memperbarui status verifikasi pembayaran', 'error'); 
+        } finally { 
+          setUpdating(false); 
+        }
+      },
+      type,
+      confirmText
+    );
   };
 
   // Reset to page 1 when filter changes
@@ -408,16 +491,22 @@ export default function AdminPaymentsPage() {
                 <textarea
                   rows={3}
                   value={note}
+                  disabled={selected.status === 'APPROVED'}
                   onChange={e => setNote(e.target.value)}
                   placeholder="Contoh: Bukti transfer lunas / Nominal kurang Rp 10.000 / Gambar tidak terbaca."
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none shadow-sm"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none shadow-sm disabled:bg-gray-100 disabled:text-gray-500"
                 />
               </div>
 
             </div>
 
-            {/* Actions Footer */}
-            <div className="bg-gray-50 p-4 border-t border-gray-100 flex flex-wrap gap-2 justify-end shrink-0">
+            <div className="bg-gray-50 p-4 border-t border-gray-100 flex flex-wrap gap-2 justify-end items-center shrink-0">
+              {selected.status === 'APPROVED' && (
+                <span className="text-xs text-green-600 font-bold bg-green-50 border border-green-200 px-4 py-2.5 rounded-xl flex items-center gap-1.5 mr-auto">
+                  <CheckCircle size={16} /> Pembayaran Telah Disetujui
+                </span>
+              )}
+              
               <button
                 onClick={() => setSelected(null)}
                 className="px-4 py-2.5 border border-gray-300 text-charcoal font-semibold rounded-xl text-sm hover:bg-gray-100 transition"
@@ -425,34 +514,50 @@ export default function AdminPaymentsPage() {
                 Kembali
               </button>
               
-              <button
-                onClick={() => handleUpdate('RETURNED')}
-                disabled={updating}
-                className="px-4 py-2.5 bg-orange-500 text-white font-bold rounded-xl text-sm hover:bg-orange-600 transition flex items-center gap-1.5 shadow-md shadow-orange-500/20 disabled:opacity-50"
-              >
-                <RotateCcw size={16} /> Minta Upload Ulang
-              </button>
+              {selected.status !== 'APPROVED' && (
+                <>
+                  <button
+                    onClick={() => handleUpdate('RETURNED')}
+                    disabled={updating}
+                    className="px-4 py-2.5 bg-orange-500 text-white font-bold rounded-xl text-sm hover:bg-orange-600 transition flex items-center gap-1.5 shadow-md shadow-orange-500/20 disabled:opacity-50"
+                  >
+                    <RotateCcw size={16} /> Minta Upload Ulang
+                  </button>
 
-              <button
-                onClick={() => handleUpdate('REJECTED')}
-                disabled={updating}
-                className="px-4 py-2.5 bg-red-500 text-white font-bold rounded-xl text-sm hover:bg-red-600 transition flex items-center gap-1.5 shadow-md shadow-red-500/20 disabled:opacity-50"
-              >
-                <XCircle size={16} /> Tolak Bayar
-              </button>
+                  <button
+                    onClick={() => handleUpdate('REJECTED')}
+                    disabled={updating}
+                    className="px-4 py-2.5 bg-red-500 text-white font-bold rounded-xl text-sm hover:bg-red-600 transition flex items-center gap-1.5 shadow-md shadow-red-500/20 disabled:opacity-50"
+                  >
+                    <XCircle size={16} /> Tolak Bayar
+                  </button>
 
-              <button
-                onClick={() => handleUpdate('APPROVED')}
-                disabled={updating}
-                className="px-5 py-2.5 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 transition flex items-center gap-1.5 shadow-md shadow-green-600/20 disabled:opacity-50"
-              >
-                <CheckCircle size={16} /> Lunas & Setujui
-              </button>
+                  <button
+                    onClick={() => handleUpdate('APPROVED')}
+                    disabled={updating}
+                    className="px-5 py-2.5 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 transition flex items-center gap-1.5 shadow-md shadow-green-600/20 disabled:opacity-50"
+                  >
+                    <CheckCircle size={16} /> Lunas & Setujui
+                  </button>
+                </>
+              )}
             </div>
 
           </div>
         </div>
       )}
+      
+      <ConfirmDialog
+        isOpen={dialog.isOpen}
+        type={dialog.type}
+        title={dialog.title}
+        message={dialog.message}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        showCancel={dialog.showCancel}
+        onConfirm={dialog.onConfirm}
+        onClose={() => setDialog(prev => ({ ...prev, isOpen: false }))}
+      />
 
     </main>
   );

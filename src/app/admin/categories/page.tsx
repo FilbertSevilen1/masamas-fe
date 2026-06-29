@@ -36,14 +36,21 @@ export default function AdminCategoriesPage() {
     message: '',
   });
 
-  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+  const showConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    type: 'danger' | 'warning' | 'info' | 'success' = 'danger',
+    confirmText = 'Hapus',
+    cancelText = 'Batal'
+  ) => {
     setDialog({
       isOpen: true,
-      type: 'danger',
+      type,
       title,
       message,
-      confirmText: 'Hapus',
-      cancelText: 'Batal',
+      confirmText,
+      cancelText,
       showCancel: true,
       onConfirm,
     });
@@ -92,20 +99,28 @@ export default function AdminCategoriesPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (editing) {
-        await api.put(`/categories/${editing.id}`, form);
-      } else {
-        await api.post('/categories', form);
-      }
-      setModal(false);
-      fetchCategories();
-      showAlert('Sukses', 'Kategori berhasil disimpan', 'success');
-    } catch {
-      showAlert('Gagal', 'Gagal menyimpan kategori', 'danger');
-    }
+    showConfirm(
+      editing ? 'Simpan Kategori' : 'Tambah Kategori',
+      editing ? 'Apakah Anda yakin ingin menyimpan perubahan pada kategori ini?' : 'Apakah Anda yakin ingin menambahkan kategori baru ini?',
+      async () => {
+        try {
+          if (editing) {
+            await api.put(`/categories/${editing.id}`, form);
+          } else {
+            await api.post('/categories', form);
+          }
+          setModal(false);
+          fetchCategories();
+          showAlert('Sukses', 'Kategori berhasil disimpan', 'success');
+        } catch {
+          showAlert('Gagal', 'Gagal menyimpan kategori', 'danger');
+        }
+      },
+      'warning',
+      'Simpan'
+    );
   };
 
   const handleDelete = (id: number) => {

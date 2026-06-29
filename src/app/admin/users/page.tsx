@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import Pagination from '@/components/common/Pagination';
 import { 
   User, 
@@ -51,9 +52,41 @@ export default function AdminUsersPage() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('CUSTOMER');
 
-  // Confirmation Modal
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<UserItem | null>(null);
+  // Dialog State
+  const [dialog, setDialog] = useState<{
+    isOpen: boolean;
+    type?: 'danger' | 'warning' | 'info' | 'success';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    showCancel?: boolean;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
+
+  const showConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    type: 'danger' | 'warning' | 'info' | 'success' = 'danger',
+    confirmText = 'Ya',
+    cancelText = 'Batal'
+  ) => {
+    setDialog({
+      isOpen: true,
+      type,
+      title,
+      message,
+      confirmText,
+      cancelText,
+      showCancel: true,
+      onConfirm,
+    });
+  };
 
   // Snackbar Notification
   const [snackbar, setSnackbar] = useState({
@@ -107,53 +140,62 @@ export default function AdminUsersPage() {
     setModalOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
-    try {
-      if (modalMode === 'create') {
-        if (!password) {
-          triggerSnackbar('Password wajib diisi untuk pengguna baru', 'warning');
-          setIsSaving(false);
-          return;
-        }
-        await api.post('/auth/users', { name, email, password, whatsapp, role });
-        triggerSnackbar('Pengguna baru berhasil dibuat!', 'success');
-      } else {
-        if (!selectedUser) return;
-        const payload: any = { name, email, whatsapp, role };
-        if (password) payload.password = password; // Only update password if filled
-        
-        await api.put(`/auth/users/${selectedUser.id}`, payload);
-        triggerSnackbar('Data pengguna berhasil diperbarui!', 'success');
-      }
-      setModalOpen(false);
-      fetchUsers();
-    } catch (err: any) {
-      const errMsg = err.response?.data?.message || 'Gagal menyimpan data pengguna';
-      triggerSnackbar(errMsg, 'error');
-    } finally {
-      setIsSaving(false);
+    if (modalMode === 'create' && !password) {
+      triggerSnackbar('Password wajib diisi untuk pengguna baru', 'warning');
+      return;
     }
+    showConfirm(
+      modalMode === 'create' ? 'Tambah Pengguna' : 'Ubah Pengguna',
+      modalMode === 'create'
+        ? `Apakah Anda yakin ingin menambahkan pengguna baru "${name}"?`
+        : `Apakah Anda yakin ingin menyimpan perubahan data pengguna "${name}"?`,
+      async () => {
+        setIsSaving(true);
+        try {
+          if (modalMode === 'create') {
+            await api.post('/auth/users', { name, email, password, whatsapp, role });
+            triggerSnackbar('Pengguna baru berhasil dibuat!', 'success');
+          } else {
+            if (!selectedUser) return;
+            const payload: any = { name, email, whatsapp, role };
+            if (password) payload.password = password; // Only update password if filled
+            
+            await api.put(`/auth/users/${selectedUser.id}`, payload);
+            triggerSnackbar('Data pengguna berhasil diperbarui!', 'success');
+          }
+          setModalOpen(false);
+          fetchUsers();
+        } catch (err: any) {
+          const errMsg = err.response?.data?.message || 'Gagal menyimpan data pengguna';
+          triggerSnackbar(errMsg, 'error');
+        } finally {
+          setIsSaving(false);
+        }
+      },
+      'warning',
+      'Simpan'
+    );
   };
 
   const handleOpenDelete = (user: UserItem) => {
-    setUserToDelete(user);
-    setConfirmDeleteOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!userToDelete) return;
-    try {
-      await api.delete(`/auth/users/${userToDelete.id}`);
-      triggerSnackbar('Pengguna berhasil dihapus!', 'success');
-      setConfirmDeleteOpen(false);
-      setUserToDelete(null);
-      fetchUsers();
-    } catch (err: any) {
-      const errMsg = err.response?.data?.message || 'Gagal menghapus pengguna';
-      triggerSnackbar(errMsg, 'error');
-    }
+    showConfirm(
+      'Hapus Pengguna',
+      `Apakah Anda yakin ingin menghapus akun milik ${user.name} (${user.email})? Tindakan ini bersifat permanen dan tidak dapat dibatalkan.`,
+      async () => {
+        try {
+          await api.delete(`/auth/users/${user.id}`);
+          triggerSnackbar('Pengguna berhasil dihapus!', 'success');
+          fetchUsers();
+        } catch (err: any) {
+          const errMsg = err.response?.data?.message || 'Gagal menghapus pengguna';
+          triggerSnackbar(errMsg, 'error');
+        }
+      },
+      'danger',
+      'Hapus'
+    );
   };
 
   // Reset page to 1 on filter changes
@@ -415,41 +457,17 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* Custom Delete Confirmation Modal */}
-      {confirmDeleteOpen && userToDelete && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 animate-slide-up">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
-                <AlertTriangle size={32} className="text-red-500" />
-              </div>
-              
-              <h3 className="text-xl font-black text-charcoal mb-2">
-                Konfirmasi Hapus
-              </h3>
-              
-              <p className="text-sm text-gray-500 leading-relaxed mb-6">
-                Apakah Anda yakin ingin menghapus akun milik <strong>{userToDelete.name}</strong> ({userToDelete.email})? Tindakan ini bersifat permanen dan tidak dapat dibatalkan.
-              </p>
-              
-              <div className="flex items-center gap-3 w-full">
-                <button
-                  onClick={() => setConfirmDeleteOpen(false)}
-                  className="flex-1 py-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition font-bold text-sm shadow-sm"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  className="flex-1 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition font-bold text-sm shadow-lg shadow-red-200"
-                >
-                  Ya, Hapus
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        isOpen={dialog.isOpen}
+        type={dialog.type}
+        title={dialog.title}
+        message={dialog.message}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        showCancel={dialog.showCancel}
+        onConfirm={dialog.onConfirm}
+        onClose={() => setDialog(prev => ({ ...prev, isOpen: false }))}
+      />
 
       {/* Toast / Snackbar Notification Container */}
       {snackbar.visible && (

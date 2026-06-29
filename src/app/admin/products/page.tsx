@@ -44,14 +44,21 @@ export default function AdminProductsPage() {
     message: '',
   });
 
-  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+  const showConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    type: 'danger' | 'warning' | 'info' | 'success' = 'danger',
+    confirmText = 'Hapus',
+    cancelText = 'Batal'
+  ) => {
     setDialog({
       isOpen: true,
-      type: 'danger',
+      type,
       title,
       message,
-      confirmText: 'Hapus',
-      cancelText: 'Batal',
+      confirmText,
+      cancelText,
       showCancel: true,
       onConfirm,
     });
@@ -151,22 +158,30 @@ export default function AdminProductsPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (editing) {
-        await api.put(`/products/${editing.id}`, form);
-      } else {
-        await api.post('/products', form);
-      }
-      setModal(false);
-      fetchData();
-      showAlert('Sukses', 'Produk berhasil disimpan', 'success');
-    } catch (err: any) {
-      console.error('Failed to save product:', err);
-      const msg = err.response?.data?.message || 'Gagal menyimpan produk';
-      showAlert('Gagal', msg, 'danger');
-    }
+    showConfirm(
+      editing ? 'Simpan Perubahan' : 'Tambah Produk',
+      editing ? 'Apakah Anda yakin ingin menyimpan perubahan pada produk ini?' : 'Apakah Anda yakin ingin menambahkan produk baru ini?',
+      async () => {
+        try {
+          if (editing) {
+            await api.put(`/products/${editing.id}`, form);
+          } else {
+            await api.post('/products', form);
+          }
+          setModal(false);
+          fetchData();
+          showAlert('Sukses', 'Produk berhasil disimpan', 'success');
+        } catch (err: any) {
+          console.error('Failed to save product:', err);
+          const msg = err.response?.data?.message || 'Gagal menyimpan produk';
+          showAlert('Gagal', msg, 'danger');
+        }
+      },
+      'warning',
+      'Simpan'
+    );
   };
 
   const handleDelete = (id: number) => {
