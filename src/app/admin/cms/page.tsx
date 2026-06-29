@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import api from '@/lib/api';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
-import { Save, RefreshCw, Plus, Trash2, ChevronUp, ChevronDown, Pencil, X, GripVertical, Image as ImageIcon } from 'lucide-react';
+import { Save, RefreshCw, Plus, Trash2, ChevronUp, ChevronDown, Pencil, X, GripVertical, Image as ImageIcon, Images } from 'lucide-react';
 
 interface ContentItem {
   id: number; key: string; value: string; label: string; type: string; group: string;
@@ -28,6 +28,37 @@ const GROUP_LABELS: Record<string, string> = {
 
 // Groups that are now handled by dedicated tables or merged sections (excluded from SiteContent rendering)
 const EXCLUDED_GROUPS = ['carousel', 'gallery', 'hero'];
+
+const getSortIndex = (key: string) => {
+  const order: Record<string, number> = {
+    // about
+    'about_title': 1,
+    'about_desc': 2,
+    'about_point_1_title': 3,
+    'about_point_1_desc': 4,
+    'about_point_2_title': 5,
+    'about_point_2_desc': 6,
+    'about_point_3_title': 7,
+    'about_point_3_desc': 8,
+    'about_stat_years': 9,
+    'about_stat_projects': 10,
+
+    // cta
+    'cta_title': 20,
+    'cta_subtitle': 21,
+    'cta_button_text': 22,
+    'cta_secondary_text': 23,
+
+    // footer
+    'footer_desc': 30,
+    'footer_address': 31,
+    'footer_phone': 32,
+    'footer_whatsapp': 33,
+    'footer_email': 34,
+    'footer_gmaps': 35,
+  };
+  return order[key] ?? 999;
+};
 
 export default function AdminCMSPage() {
   const [contents, setContents] = useState<ContentItem[]>([]);
@@ -337,7 +368,10 @@ export default function AdminCMSPage() {
             ══════════════════════════════════════════════════════════════════ */}
             <div className="bg-slate-100 rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="bg-charcoal text-white px-6 py-4 flex justify-between items-center">
-                <h2 className="font-bold text-lg">🎠 Carousel Banner (Landing Page Atas)</h2>
+                <h2 className="font-bold text-lg flex items-center gap-2">
+                  <Images size={20} className="text-primary" />
+                  <span>Carousel Banner (Landing Page Atas)</span>
+                </h2>
                 <button
                   onClick={() => { cancelBannerForm(); setShowBannerForm(true); }}
                   className="flex items-center gap-2 px-4 py-2 bg-primary rounded-lg text-sm font-bold hover:bg-primary-dark transition cursor-pointer"
@@ -350,8 +384,18 @@ export default function AdminCMSPage() {
                 {showBannerForm && (
                   <div className="bg-white rounded-xl border border-primary/30 p-5 space-y-4 shadow-sm">
                     <div className="flex justify-between items-center">
-                      <h3 className="font-bold text-charcoal text-sm">
-                        {editingBanner ? '✏️ Edit Banner' : '➕ Tambah Banner Baru'}
+                      <h3 className="font-bold text-charcoal text-sm flex items-center gap-1.5">
+                        {editingBanner ? (
+                          <>
+                            <Pencil size={14} className="text-blue-500" />
+                            <span>Edit Banner</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus size={14} className="text-primary" />
+                            <span>Tambah Banner Baru</span>
+                          </>
+                        )}
                       </h3>
                       <button onClick={cancelBannerForm} className="text-gray-400 hover:text-gray-600 cursor-pointer">
                         <X size={18} />
@@ -485,7 +529,10 @@ export default function AdminCMSPage() {
             ══════════════════════════════════════════════════════════════════ */}
             <div className="bg-slate-100 rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="bg-charcoal text-white px-6 py-4 flex justify-between items-center">
-                <h2 className="font-bold text-lg">🖼️ Galeri Foto (Landing Page Bawah)</h2>
+                <h2 className="font-bold text-lg flex items-center gap-2">
+                  <ImageIcon size={20} className="text-primary" />
+                  <span>Galeri Foto (Landing Page Bawah)</span>
+                </h2>
                 <button
                   onClick={() => { cancelGalleryForm(); setShowGalleryForm(true); }}
                   className="flex items-center gap-2 px-4 py-2 bg-primary rounded-lg text-sm font-bold hover:bg-primary-dark transition cursor-pointer"
@@ -498,8 +545,18 @@ export default function AdminCMSPage() {
                 {showGalleryForm && (
                   <div className="bg-white rounded-xl border border-primary/30 p-5 space-y-4 shadow-sm">
                     <div className="flex justify-between items-center">
-                      <h3 className="font-bold text-charcoal text-sm">
-                        {editingGallery ? '✏️ Edit Foto Galeri' : '➕ Tambah Foto Galeri Baru'}
+                      <h3 className="font-bold text-charcoal text-sm flex items-center gap-1.5">
+                        {editingGallery ? (
+                          <>
+                            <Pencil size={14} className="text-blue-500" />
+                            <span>Edit Foto Galeri</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus size={14} className="text-primary" />
+                            <span>Tambah Foto Galeri Baru</span>
+                          </>
+                        )}
                       </h3>
                       <button onClick={cancelGalleryForm} className="text-gray-400 hover:text-gray-600 cursor-pointer">
                         <X size={18} />
@@ -633,7 +690,7 @@ export default function AdminCMSPage() {
                   </button>
                 </div>
                 <div className="p-6 space-y-5">
-                  {contents.filter(c => c.group === group).map(item => (
+                  {contents.filter(c => c.group === group).sort((a, b) => getSortIndex(a.key) - getSortIndex(b.key)).map(item => (
                     <div key={item.key}>
                       <label className="block text-sm font-semibold text-charcoal mb-2">
                         {item.label}

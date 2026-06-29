@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { usePathname } from 'next/navigation';
 
 const WhatsAppIcon = ({ size = 28, className = '' }: { size?: number; className?: string }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" className={className}>
@@ -10,9 +11,17 @@ const WhatsAppIcon = ({ size = 28, className = '' }: { size?: number; className?
 );
 
 export default function WhatsAppFloatingButton() {
+  const pathname = usePathname();
   const [whatsapp, setWhatsapp] = useState('');
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [hasDragged, setHasDragged] = useState(false);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
+    // Suppress fetching on admin pages
+    if (pathname?.startsWith('/admin')) return;
+
     api.get('/cms/map')
       .then((res) => {
         const num = res.data.footer_whatsapp || '+62 812 3456 7890';
@@ -21,20 +30,133 @@ export default function WhatsAppFloatingButton() {
       .catch(() => {
         setWhatsapp('+62 812 3456 7890');
       });
-  }, []);
+  }, [pathname]);
 
+  // Initialize default screen location relative to client viewport
+  useEffect(() => {
+    if (pathname?.startsWith('/admin')) return;
+
+    const initX = window.innerWidth - 85;
+    const initY = window.innerHeight - 85;
+    setPosition({ x: initX, y: initY });
+
+    const handleResize = () => {
+      setPosition((prev) => {
+        if (!prev) return { x: window.innerWidth - 85, y: window.innerHeight - 85 };
+        const newX = Math.min(prev.x, window.innerWidth - 85);
+        const newY = Math.min(prev.y, window.innerHeight - 85);
+        return { x: newX, y: newY };
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [pathname]);
+
+  // Draggable Event Listeners
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      setHasDragged(true);
+      let newX = e.clientX - offset.x;
+      let newY = e.clientY - offset.y;
+
+      // Restrict button from escaping viewport boundaries
+      newX = Math.max(16, Math.min(newX, window.innerWidth - 85));
+      newY = Math.max(16, Math.min(newY, window.innerHeight - 85));
+
+      setPosition({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.cancelable) e.preventDefault(); // Prevents web view scroll while dragging
+      setHasDragged(true);
+      const touch = e.touches[0];
+      let newX = touch.clientX - offset.x;
+      let newY = touch.clientY - offset.y;
+
+      newX = Math.max(16, Math.min(newX, window.innerWidth - 85));
+      newY = Math.max(16, Math.min(newY, window.innerHeight - 85));
+
+      setPosition({ x: newX, y: newY });
+    };
+
+    const handleTouchEnd = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isDragging, offset]);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (e.button !== 0) return; // Left mouse clicks only
+    setIsDragging(true);
+    setHasDragged(false);
+    const rect = e.currentTarget.getBoundingClientRect();
+    setOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLAnchorElement>) => {
+    const touch = e.touches[0];
+    setIsDragging(true);
+    setHasDragged(false);
+    const rect = e.currentTarget.getBoundingClientRect();
+    setOffset({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    });
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // If the button was dragged, intercept the click action to avoid opening the link
+    if (hasDragged) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  // Hide completely on admin routes
+  if (pathname?.startsWith('/admin')) return null;
   if (!whatsapp) return null;
 
   const cleanNum = whatsapp.replace(/[^0-9]/g, '');
   const waNumber = cleanNum.startsWith('0') ? `62${cleanNum.slice(1)}` : cleanNum;
   const waLink = `https://wa.me/${waNumber}?text=${encodeURIComponent('Halo Admin Masamas, saya ingin bertanya tentang produk Anda.')}`;
 
+  const dragStyles = position
+    ? { left: `${position.x}px`, top: `${position.y}px`, bottom: 'auto', right: 'auto' }
+    : { bottom: '24px', right: '24px' };
+
   return (
     <a
       href={waLink}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-[9999] flex items-center justify-center bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:bg-[#20ba5a] hover:scale-110 active:scale-95 transition-all duration-300 group"
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
+      onClick={handleClick}
+      style={{
+        ...dragStyles,
+        transition: isDragging ? 'none' : 'transform 0.2s ease, background-color 0.2s ease, scale 0.2s ease',
+      }}
+      className="fixed z-[9999] flex items-center justify-center bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:bg-[#20ba5a] hover:scale-110 active:scale-95 group select-none cursor-grab active:cursor-grabbing touch-none"
       aria-label="Chat Admin via WhatsApp"
     >
       <WhatsAppIcon className="animate-pulse" />

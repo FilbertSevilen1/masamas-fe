@@ -20,7 +20,7 @@ interface CartState {
   items: CartItem[];
   loading: boolean;
   fetchCart: () => Promise<void>;
-  addToCart: (productId: number, quantity: number) => Promise<boolean>;
+  addToCart: (productId: number, quantity: number) => Promise<{ success: boolean; message?: string }>;
   updateQuantity: (id: number, quantity: number) => Promise<void>;
   removeItem: (id: number) => Promise<void>;
   clearCart: () => void;
@@ -47,12 +47,10 @@ export const useCartStore = create<CartState>((set) => ({
     try {
       const res = await api.post('/cart/add', { productId, quantity });
       set({ items: res.data.items || [] });
-      return true;
+      return { success: true };
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        // Redirect handled by middleware — just return false
-      }
-      return false;
+      const message = error.response?.data?.message || 'Gagal menambahkan ke keranjang';
+      return { success: false, message };
     }
   },
 

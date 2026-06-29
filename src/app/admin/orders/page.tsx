@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import Link from 'next/link';
+import Pagination from '@/components/common/Pagination';
 import { 
   Package, 
   Truck, 
@@ -19,7 +20,8 @@ import {
   User,
   MapPin,
   DollarSign,
-  Phone
+  Phone,
+  Filter
 } from 'lucide-react';
 
 interface Order {
@@ -66,6 +68,10 @@ export default function AdminOrdersPage() {
   const [paymentFilter, setPaymentFilter] = useState('');
   const [shippingFilter, setShippingFilter] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   
   // Modal forms
   const [modalPaymentStatus, setModalPaymentStatus] = useState('');
@@ -176,6 +182,11 @@ export default function AdminOrdersPage() {
     }
   };
 
+  // Reset to page 1 when any filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, paymentFilter, shippingFilter]);
+
   const filtered = orders.filter(o => {
     const matchSearch = !search || 
       o.user.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -185,6 +196,10 @@ export default function AdminOrdersPage() {
     const matchShipping = !shippingFilter || o.shippingStatus === shippingFilter;
     return matchSearch && matchPayment && matchShipping;
   });
+
+  const totalPages = Math.ceil(filtered.length / limit);
+  const startIndex = (page - 1) * limit;
+  const paginatedOrders = filtered.slice(startIndex, startIndex + limit);
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -202,36 +217,63 @@ export default function AdminOrdersPage() {
           </button>
         </div>
 
-        {/* Filters Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="relative md:col-span-2">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              value={search} 
-              onChange={e => setSearch(e.target.value)} 
-              placeholder="Cari ID pesanan, nama pembeli, atau alamat..." 
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm bg-white shadow-sm" 
-            />
+        {/* Unified Filter Card */}
+        <div className="bg-white border border-slate-200 p-5 rounded-2xl mb-8 shadow-sm flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
+          <div className="flex items-center gap-2 text-charcoal font-bold text-sm shrink-0">
+            <Filter size={18} className="text-primary" />
+            <span>Pencarian & Filter Pesanan</span>
           </div>
-          <div>
-            <select 
-              value={paymentFilter} 
-              onChange={e => setPaymentFilter(e.target.value)} 
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 bg-white text-sm shadow-sm"
-            >
-              <option value="">Semua Status Pembayaran</option>
-              {PAYMENT_STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
-          </div>
-          <div>
-            <select 
-              value={shippingFilter} 
-              onChange={e => setShippingFilter(e.target.value)} 
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 bg-white text-sm shadow-sm"
-            >
-              <option value="">Semua Status Pengiriman</option>
-              {SHIPPING_STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
+          
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-grow justify-end">
+            {/* Search Input */}
+            <div className="relative flex-grow max-w-md">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input 
+                value={search} 
+                onChange={e => setSearch(e.target.value)} 
+                placeholder="Cari ID, pembeli, atau alamat..." 
+                className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm bg-slate-50/50 hover:bg-slate-50 transition" 
+              />
+            </div>
+            
+            {/* Payment Filter */}
+            <div className="w-full sm:w-52 shrink-0">
+              <select 
+                value={paymentFilter} 
+                onChange={e => setPaymentFilter(e.target.value)} 
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 bg-slate-50/50 hover:bg-slate-50 text-sm font-semibold text-charcoal transition"
+              >
+                <option value="">Semua Pembayaran</option>
+                {PAYMENT_STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </select>
+            </div>
+            
+            {/* Shipping Filter */}
+            <div className="w-full sm:w-52 shrink-0">
+              <select 
+                value={shippingFilter} 
+                onChange={e => setShippingFilter(e.target.value)} 
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 bg-slate-50/50 hover:bg-slate-50 text-sm font-semibold text-charcoal transition"
+              >
+                <option value="">Semua Pengiriman</option>
+                {SHIPPING_STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </select>
+            </div>
+            
+            {/* Reset Button */}
+            {(search || paymentFilter || shippingFilter) && (
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setPaymentFilter('');
+                  setShippingFilter('');
+                }}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 border border-red-250 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition cursor-pointer shrink-0"
+              >
+                <RotateCcw size={14} />
+                <span>Reset</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -292,7 +334,7 @@ export default function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(order => {
+                {paginatedOrders.map(order => {
                   const payCfg = getPaymentStatusConfig(order.paymentStatus);
                   const shipCfg = getShippingStatusConfig(order.shippingStatus);
                   return (
@@ -344,6 +386,15 @@ export default function AdminOrdersPage() {
           </div>
           {loading && <div className="text-center py-12 text-gray-400 font-medium">Memuat data pesanan...</div>}
           {!loading && filtered.length === 0 && <div className="text-center py-16 text-gray-400">Tidak ada pesanan ditemukan</div>}
+          
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={filtered.length}
+            limit={limit}
+            onPageChange={setPage}
+            onLimitChange={setLimit}
+          />
         </div>
       </div>
 

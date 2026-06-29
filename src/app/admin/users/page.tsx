@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import Pagination from '@/components/common/Pagination';
 import { 
   User, 
   Shield, 
@@ -13,7 +14,9 @@ import {
   Save, 
   AlertTriangle, 
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Filter,
+  RotateCcw
 } from 'lucide-react';
 
 interface UserItem {
@@ -30,6 +33,11 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Pagination & Role Filter States
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [roleFilter, setRoleFilter] = useState('');
 
   // Modal States
   const [modalOpen, setModalOpen] = useState(false);
@@ -148,10 +156,22 @@ export default function AdminUsersPage() {
     }
   };
 
-  const filtered = users.filter(u =>
-    u.name.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
-  );
+  // Reset page to 1 on filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, roleFilter]);
+
+  const filtered = users.filter(u => {
+    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase()) ||
+      (u.whatsapp && u.whatsapp.includes(search));
+    const matchRole = !roleFilter || u.role === roleFilter;
+    return matchSearch && matchRole;
+  });
+
+  const totalPages = Math.ceil(filtered.length / limit);
+  const startIndex = (page - 1) * limit;
+  const paginatedUsers = filtered.slice(startIndex, startIndex + limit);
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -161,7 +181,7 @@ export default function AdminUsersPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-charcoal">Manajemen Pengguna</h1>
-            <p className="text-gray-500 mt-1">{users.length} total pengguna terdaftar</p>
+            <p className="text-gray-500 mt-1">{filtered.length} total pengguna ditemukan</p>
           </div>
           <button 
             onClick={handleOpenCreate}
@@ -171,15 +191,52 @@ export default function AdminUsersPage() {
           </button>
         </div>
 
-        {/* Filter and Search Bar */}
-        <div className="relative mb-6 max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Cari nama atau email..."
-            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm bg-white shadow-sm"
-          />
+        {/* Unified Filter Card */}
+        <div className="bg-white border border-slate-200 p-5 rounded-2xl mb-6 shadow-sm flex flex-col md:flex-row md:items-center gap-4 justify-between">
+          <div className="flex items-center gap-2 text-charcoal font-bold text-sm shrink-0">
+            <Filter size={18} className="text-primary" />
+            <span>Pencarian & Filter Pengguna</span>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-grow justify-end">
+            {/* Search Input */}
+            <div className="relative flex-grow max-w-sm">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Cari nama, email, atau WA..."
+                className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm bg-slate-50/50 hover:bg-slate-50 transition"
+              />
+            </div>
+            
+            {/* Role Filter */}
+            <div className="w-full sm:w-48 shrink-0">
+              <select
+                value={roleFilter}
+                onChange={e => setRoleFilter(e.target.value)}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 bg-slate-50/50 hover:bg-slate-50 text-sm font-semibold text-charcoal transition"
+              >
+                <option value="">Semua Peran</option>
+                <option value="CUSTOMER">Customer (Pelanggan)</option>
+                <option value="ADMIN">Admin (Pengelola)</option>
+              </select>
+            </div>
+            
+            {/* Reset Button */}
+            {(search || roleFilter) && (
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setRoleFilter('');
+                }}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 border border-red-250 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition cursor-pointer shrink-0"
+              >
+                <RotateCcw size={14} />
+                <span>Reset</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Users Table */}
@@ -197,7 +254,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(u => (
+                {paginatedUsers.map(u => (
                   <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -243,6 +300,15 @@ export default function AdminUsersPage() {
           </div>
           {loading && <div className="text-center py-12 text-gray-400 font-medium">Memuat data pengguna...</div>}
           {!loading && filtered.length === 0 && <div className="text-center py-16 text-gray-400">Pengguna tidak ditemukan</div>}
+          
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={filtered.length}
+            limit={limit}
+            onPageChange={setPage}
+            onLimitChange={setLimit}
+          />
         </div>
       </div>
 

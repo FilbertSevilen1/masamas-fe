@@ -14,24 +14,6 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const role = request.cookies.get('role')?.value;
 
-  // Redirect disabled user routes to homepage
-  const isDisabledUserRoute = ['/cart', '/checkout', '/orders', '/payment-upload'].some((route) => pathname.startsWith(route));
-  if (isDisabledUserRoute) {
-    const response = NextResponse.redirect(new URL('/', request.url));
-    response.headers.set('x-middleware-cache', 'no-cache');
-    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
-    return response;
-  }
-
-  // Redirect disabled admin routes to admin dashboard
-  const isDisabledAdminRoute = ['/admin/orders', '/admin/payments', '/admin/users'].some((route) => pathname.startsWith(route));
-  if (isDisabledAdminRoute) {
-    const response = NextResponse.redirect(new URL('/admin', request.url));
-    response.headers.set('x-middleware-cache', 'no-cache');
-    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
-    return response;
-  }
-
   // Allow public routes always
   const isPublic = PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith('/products') || pathname.startsWith('/categories')

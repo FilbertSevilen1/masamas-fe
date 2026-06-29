@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 
 import api from '@/lib/api';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
-import { Plus, Edit2, Trash2, X, Save, Image, Search } from 'lucide-react';
+import Pagination from '@/components/common/Pagination';
+import { Plus, Edit2, Trash2, X, Save, Image, Search, Filter, RotateCcw } from 'lucide-react';
 
-interface Category { id: number; name: string }
+interface Category { id: number; name: string; slug: string }
 interface Product {
   id: number; name: string; slug: string; price: string; stock: number;
   thumbnail: string | null; category: { name: string };
@@ -19,7 +20,14 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ categoryId: '', name: '', description: '', price: '', stock: '9999', thumbnail: '' });
+  const [form, setForm] = useState({ categoryId: '', name: '', description: '', price: '', stock: '0', thumbnail: '' });
+
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState('');
 
   const [dialog, setDialog] = useState<{
     isOpen: boolean;
@@ -60,26 +68,78 @@ export default function AdminProductsPage() {
     });
   };
 
+  // Fetch categories once on mount
+  useEffect(() => {
+    api.get('/categories')
+      .then(r => setCategories(r.data))
+      .catch(() => {});
+  }, []);
+
+  // Fetch products when pagination or category filter changes
   useEffect(() => {
     fetchData();
-    api.get('/categories').then(r => setCategories(r.data));
-  }, []);
+  }, [page, limit, selectedCategory]);
 
   const fetchData = async () => {
     setLoading(true);
-    const res = await api.get(`/products?limit=50${search ? `&search=${search}` : ''}`);
-    setProducts(res.data.products);
-    setLoading(false);
+    try {
+      const categoryParam = selectedCategory ? `&category=${selectedCategory}` : '';
+      const searchParam = search ? `&search=${search}` : '';
+      const res = await api.get(`/products?page=${page}&limit=${limit}${categoryParam}${searchParam}`);
+      setProducts(res.data.products || []);
+      setTotalProducts(res.data.total || 0);
+      setTotalPages(res.data.totalPages || 0);
+    } catch {
+      showAlert('Gagal', 'Gagal mengambil data produk', 'danger');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = () => {
+    if (page === 1) {
+      fetchData();
+    } else {
+      setPage(1);
+    }
+  };
+
+  const handleCategoryChange = (catSlug: string) => {
+    setSelectedCategory(catSlug);
+    setPage(1);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
+
+  const handleReset = () => {
+    setSearch('');
+    setSelectedCategory('');
+    if (page === 1 && selectedCategory === '') {
+      setLoading(true);
+      api.get(`/products?page=1&limit=${limit}`)
+        .then(res => {
+          setProducts(res.data.products || []);
+          setTotalProducts(res.data.total || 0);
+          setTotalPages(res.data.totalPages || 0);
+        })
+        .catch(() => showAlert('Gagal', 'Gagal mengambil data produk', 'danger'))
+        .finally(() => setLoading(false));
+    } else {
+      setPage(1);
+    }
   };
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ categoryId: '', name: '', description: '', price: '', stock: '9999', thumbnail: '' });
+    setForm({ categoryId: '', name: '', description: '', price: '', stock: '0', thumbnail: '' });
     setModal(true);
   };
   const openEdit = (p: any) => {
     setEditing(p);
-    setForm({ categoryId: p.categoryId, name: p.name, description: p.description, price: p.price, stock: String(p.stock), thumbnail: p.thumbnail || '' });
+    setForm({ categoryId: p.categoryId, name: p.name, description: p.description, price: p.price, stock: String(p.stock ?? 0), thumbnail: p.thumbnail || '' });
     setModal(true);
   };
 
@@ -102,8 +162,10 @@ export default function AdminProductsPage() {
       setModal(false);
       fetchData();
       showAlert('Sukses', 'Produk berhasil disimpan', 'success');
-    } catch {
-      showAlert('Gagal', 'Gagal menyimpan produk', 'danger');
+    } catch (err: any) {
+      console.error('Failed to save product:', err);
+      const msg = err.response?.data?.message || 'Gagal menyimpan produk';
+      showAlert('Gagal', msg, 'danger');
     }
   };
 
@@ -125,29 +187,73 @@ export default function AdminProductsPage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-charcoal">Kelola Produk</h1>
-            <p className="text-gray-500 mt-1">{products.length} produk terdaftar</p>
+            <p className="text-gray-500 mt-1">{totalProducts} produk terdaftar</p>
           </div>
           <button onClick={openCreate} className="flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition shadow-lg shadow-primary/30">
             <Plus size={20} /> Tambah Produk
           </button>
         </div>
 
-        {/* Search */}
-        <div className="flex gap-3 mb-6">
-          <div className="relative flex-grow max-w-sm">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchData()} placeholder="Cari produk..." className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm" />
+        {/* Unified Filter Card */}
+        <div className="bg-white border border-slate-200 p-5 rounded-2xl mb-6 shadow-sm flex flex-col md:flex-row md:items-center gap-4 justify-between">
+          <div className="flex items-center gap-2 text-charcoal font-bold text-sm shrink-0">
+            <Filter size={18} className="text-primary" />
+            <span>Pencarian & Filter</span>
           </div>
-          <button onClick={fetchData} className="px-4 py-2.5 bg-charcoal text-white rounded-xl text-sm font-semibold hover:bg-charcoal-light transition">Cari</button>
+          
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-grow justify-end">
+            {/* Search Input */}
+            <div className="relative flex-grow max-w-md">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input 
+                value={search} 
+                onChange={e => setSearch(e.target.value)} 
+                onKeyDown={e => e.key === 'Enter' && handleSearch()} 
+                placeholder="Cari produk..." 
+                className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm bg-slate-50/50 hover:bg-slate-50 transition" 
+              />
+            </div>
+            
+            {/* Category Dropdown */}
+            <div className="w-full sm:w-56 shrink-0">
+              <select
+                value={selectedCategory}
+                onChange={e => handleCategoryChange(e.target.value)}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 bg-slate-50/50 hover:bg-slate-50 text-sm font-semibold text-charcoal transition"
+              >
+                <option value="">Semua Kategori</option>
+                {categories.map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}
+              </select>
+            </div>
+            
+            {/* Reset Button */}
+            {(search || selectedCategory) && (
+              <button
+                onClick={handleReset}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 border border-red-250 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition cursor-pointer shrink-0"
+              >
+                <RotateCcw size={14} />
+                <span>Reset</span>
+              </button>
+            )}
+            
+            <button 
+              onClick={handleSearch} 
+              className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition shadow-md shadow-primary/20 shrink-0 cursor-pointer"
+            >
+              Cari
+            </button>
+          </div>
         </div>
 
         <div className="bg-slate-100 rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <table className="w-full text-left text-sm">
+           <table className="w-full text-left text-sm">
             <thead className="bg-slate-200/60 border-b border-slate-200">
               <tr>
                 <th className="p-4 font-semibold text-charcoal">Produk</th>
                 <th className="p-4 font-semibold text-charcoal">Kategori</th>
                 <th className="p-4 font-semibold text-charcoal">Harga</th>
+                <th className="p-4 font-semibold text-charcoal">Stok</th>
                 <th className="p-4 font-semibold text-charcoal">Aksi</th>
               </tr>
             </thead>
@@ -164,6 +270,7 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="p-4 text-gray-500">{p.category.name}</td>
                   <td className="p-4 font-bold text-charcoal">Rp {Number(p.price).toLocaleString('id-ID')}</td>
+                  <td className={`p-4 font-bold ${p.stock <= 5 ? 'text-red-500' : 'text-gray-600'}`}>{p.stock} unit</td>
                   <td className="p-4">
                     <div className="flex gap-2">
                       <button onClick={() => openEdit(p)} className="p-2 border border-slate-300 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition"><Edit2 size={15} /></button>
@@ -176,6 +283,15 @@ export default function AdminProductsPage() {
           </table>
           {loading && <div className="text-center py-8 text-gray-400">Memuat...</div>}
           {!loading && products.length === 0 && <div className="text-center py-12 text-gray-400">Belum ada produk</div>}
+          
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={totalProducts}
+            limit={limit}
+            onPageChange={setPage}
+            onLimitChange={handleLimitChange}
+          />
         </div>
       </div>
 
@@ -206,6 +322,10 @@ export default function AdminProductsPage() {
               <div>
                 <label className="block text-sm font-semibold text-charcoal mb-2">Harga (Rp)</label>
                 <input required type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-charcoal" placeholder="150000" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-charcoal mb-2">Stok</label>
+                <input required type="number" value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} className="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-charcoal" placeholder="100" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-charcoal mb-2">Foto Produk</label>

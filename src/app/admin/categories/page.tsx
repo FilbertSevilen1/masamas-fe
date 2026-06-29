@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 
 import api from '@/lib/api';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
-import { Plus, Edit2, Trash2, X, Save, Image } from 'lucide-react';
+import Pagination from '@/components/common/Pagination';
+import { Plus, Edit2, Trash2, X, Save, Image, Search, Filter, RotateCcw } from 'lucide-react';
 
 interface Category { id: number; name: string; slug: string; image: string | null; _count: { products: number } }
 
@@ -14,6 +15,11 @@ export default function AdminCategoriesPage() {
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [form, setForm] = useState({ name: '', image: '' });
+
+  // Search & Pagination states
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const [dialog, setDialog] = useState<{
     isOpen: boolean;
@@ -62,6 +68,19 @@ export default function AdminCategoriesPage() {
     setLoading(false);
   };
 
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  const filtered = categories.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filtered.length / limit);
+  const startIndex = (page - 1) * limit;
+  const paginatedCategories = filtered.slice(startIndex, startIndex + limit);
+
   const openCreate = () => { setEditing(null); setForm({ name: '', image: '' }); setModal(true); };
   const openEdit = (c: Category) => { setEditing(c); setForm({ name: c.name, image: c.image || '' }); setModal(true); };
 
@@ -107,34 +126,83 @@ export default function AdminCategoriesPage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-charcoal">Kelola Kategori</h1>
-            <p className="text-gray-500 mt-1">{categories.length} kategori tersedia</p>
+            <p className="text-gray-500 mt-1">{filtered.length} kategori ditemukan</p>
           </div>
           <button onClick={openCreate} className="flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition shadow-lg shadow-primary/30">
             <Plus size={20} /> Tambah Kategori
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {categories.map(cat => (
-            <div key={cat.id} className="bg-slate-100 rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-md hover:border-slate-300 transition">
-              <div className="aspect-video bg-slate-200 overflow-hidden">
-                {cat.image ? <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 text-5xl">🏗️</div>}
-              </div>
-              <div className="p-5">
-                <h3 className="text-lg font-bold text-charcoal">{cat.name}</h3>
-                <p className="text-sm text-gray-500 mt-1">{cat._count.products} produk</p>
-                <div className="flex gap-2 mt-4">
-                  <button onClick={() => openEdit(cat)} className="flex-1 flex items-center justify-center gap-1 py-2 border border-slate-300 bg-slate-200/50 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition">
-                    <Edit2 size={14} /> Edit
-                  </button>
-                  <button onClick={() => handleDelete(cat.id)} className="flex-1 flex items-center justify-center gap-1 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition">
-                    <Trash2 size={14} /> Hapus
-                  </button>
-                </div>
-              </div>
+        {/* Unified Filter Card */}
+        <div className="bg-white border border-slate-200 p-5 rounded-2xl mb-6 shadow-sm flex flex-col md:flex-row md:items-center gap-4 justify-between">
+          <div className="flex items-center gap-2 text-charcoal font-bold text-sm shrink-0">
+            <Filter size={18} className="text-primary" />
+            <span>Pencarian & Filter</span>
+          </div>
+          
+          <div className="flex items-center gap-3 flex-grow max-w-md justify-end">
+            <div className="relative flex-grow">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Cari nama kategori..."
+                className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm bg-slate-50/50 hover:bg-slate-50 transition"
+              />
             </div>
-          ))}
+            
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 border border-red-250 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition cursor-pointer shrink-0"
+              >
+                <RotateCcw size={14} />
+                <span>Reset</span>
+              </button>
+            )}
+          </div>
         </div>
+
+        {paginatedCategories.length === 0 ? (
+          <div className="text-center py-16 bg-slate-100 border border-slate-200 rounded-2xl text-gray-400 font-medium">
+            Tidak ada kategori ditemukan
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {paginatedCategories.map(cat => (
+                <div key={cat.id} className="bg-slate-100 rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-md hover:border-slate-300 transition">
+                  <div className="aspect-video bg-slate-200 overflow-hidden">
+                    {cat.image ? <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 text-5xl">🏗️</div>}
+                  </div>
+                  <div className="p-5">
+                    <h3 className="text-lg font-bold text-charcoal">{cat.name}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{cat._count.products} produk</p>
+                    <div className="flex gap-2 mt-4">
+                      <button onClick={() => openEdit(cat)} className="flex-1 flex items-center justify-center gap-1 py-2 border border-slate-300 bg-slate-200/50 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition">
+                        <Edit2 size={14} /> Edit
+                      </button>
+                      <button onClick={() => handleDelete(cat.id)} className="flex-1 flex items-center justify-center gap-1 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition">
+                        <Trash2 size={14} /> Hapus
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={filtered.length}
+                limit={limit}
+                onPageChange={setPage}
+                onLimitChange={setLimit}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Modal */}

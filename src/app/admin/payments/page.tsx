@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import Pagination from '@/components/common/Pagination';
 import { 
   CheckCircle, 
   XCircle, 
@@ -14,7 +15,8 @@ import {
   DollarSign,
   Clock,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Filter
 } from 'lucide-react';
 
 interface Payment {
@@ -54,6 +56,10 @@ export default function AdminPaymentsPage() {
   // Search & Filter
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   // Snackbar State
   const [snackbar, setSnackbar] = useState<SnackbarState>({
@@ -112,6 +118,11 @@ export default function AdminPaymentsPage() {
     }
   };
 
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter]);
+
   const filtered = payments.filter(p => {
     const matchSearch = !search || 
       p.order.user.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -120,6 +131,10 @@ export default function AdminPaymentsPage() {
     const matchStatus = !statusFilter || p.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  const totalPages = Math.ceil(filtered.length / limit);
+  const startIndex = (page - 1) * limit;
+  const paginatedPayments = filtered.slice(startIndex, startIndex + limit);
 
   return (
     <main className="min-h-screen bg-gray-50 relative">
@@ -166,29 +181,53 @@ export default function AdminPaymentsPage() {
           </button>
         </div>
 
-        {/* Filters and Search - Matches Admin Orders Page Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="relative md:col-span-2">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              value={search} 
-              onChange={e => setSearch(e.target.value)} 
-              placeholder="Cari ID pesanan, nama pembeli, atau email..." 
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm bg-white shadow-sm" 
-            />
+        {/* Unified Filter Card */}
+        <div className="bg-white border border-slate-200 p-5 rounded-2xl mb-8 shadow-sm flex flex-col md:flex-row md:items-center gap-4 justify-between">
+          <div className="flex items-center gap-2 text-charcoal font-bold text-sm shrink-0">
+            <Filter size={18} className="text-primary" />
+            <span>Pencarian & Filter Pembayaran</span>
           </div>
-          <div>
-            <select 
-              value={statusFilter} 
-              onChange={e => setStatusFilter(e.target.value)} 
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 bg-white text-sm shadow-sm"
-            >
-              <option value="">Semua Status Pembayaran</option>
-              <option value="WAITING_VERIFICATION">Menunggu Verifikasi</option>
-              <option value="APPROVED">Disetujui</option>
-              <option value="RETURNED">Dikembalikan</option>
-              <option value="REJECTED">Ditolak</option>
-            </select>
+          
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-grow justify-end">
+            {/* Search Input */}
+            <div className="relative flex-grow max-w-md">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input 
+                value={search} 
+                onChange={e => setSearch(e.target.value)} 
+                placeholder="Cari ID pesanan, nama pembeli, atau email..." 
+                className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm bg-slate-50/50 hover:bg-slate-50 transition" 
+              />
+            </div>
+            
+            {/* Status Filter */}
+            <div className="w-full sm:w-56 shrink-0">
+              <select 
+                value={statusFilter} 
+                onChange={e => setStatusFilter(e.target.value)} 
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 bg-slate-50/50 hover:bg-slate-50 text-sm font-semibold text-charcoal transition"
+              >
+                <option value="">Semua Status Pembayaran</option>
+                <option value="WAITING_VERIFICATION">Menunggu Verifikasi</option>
+                <option value="APPROVED">Disetujui</option>
+                <option value="RETURNED">Dikembalikan</option>
+                <option value="REJECTED">Ditolak</option>
+              </select>
+            </div>
+            
+            {/* Reset Button */}
+            {(search || statusFilter) && (
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setStatusFilter('');
+                }}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 border border-red-250 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition cursor-pointer shrink-0"
+              >
+                <RotateCcw size={14} />
+                <span>Reset</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -248,7 +287,7 @@ export default function AdminPaymentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(p => {
+                {paginatedPayments.map(p => {
                   const labelCfg = STATUS_LABELS[p.status] || { label: p.status, color: 'bg-gray-100 text-gray-600' };
                   return (
                     <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
@@ -288,6 +327,15 @@ export default function AdminPaymentsPage() {
           </div>
           {loading && <div className="text-center py-12 text-gray-400 font-medium">Memuat data verifikasi...</div>}
           {!loading && filtered.length === 0 && <div className="text-center py-16 text-gray-400">Tidak ada bukti pembayaran ditemukan</div>}
+          
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={filtered.length}
+            limit={limit}
+            onPageChange={setPage}
+            onLimitChange={setLimit}
+          />
         </div>
 
       </div>
