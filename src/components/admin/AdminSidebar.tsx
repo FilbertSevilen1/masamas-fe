@@ -46,7 +46,7 @@ export default function AdminSidebar() {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-6 py-6 border-b border-white/10">
-        <Link href="/admin" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/30">
             <span className="text-white font-bold text-lg">M</span>
           </div>
@@ -100,12 +100,6 @@ export default function AdminSidebar() {
           <LogOut size={17} />
           Keluar
         </button>
-        <Link
-          href="/"
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition mt-1"
-        >
-          ← Kembali ke Website
-        </Link>
       </div>
     </div>
   );

@@ -259,7 +259,7 @@ export default function ProductDetailPage() {
                     <button
                       onClick={() => handleAddToCart(false)}
                       disabled={adding}
-                      className="flex-grow flex items-center justify-center gap-2 py-4 rounded-xl font-bold bg-white border border-primary text-primary hover:bg-emerald-50 transition-all shadow-sm hover:scale-[1.02] active:scale-95 duration-200 cursor-pointer disabled:opacity-50"
+                      className="flex-grow flex items-center justify-center gap-2 px-4 py-4 rounded-xl font-bold bg-white border border-primary text-primary hover:bg-emerald-50 transition-all shadow-sm hover:scale-[1.02] active:scale-95 duration-200 cursor-pointer disabled:opacity-50"
                     >
                       <ShoppingCart size={20} />
                       <span>Tambah ke Keranjang</span>
@@ -267,7 +267,7 @@ export default function ProductDetailPage() {
                     <button
                       onClick={() => handleAddToCart(true)}
                       disabled={adding}
-                      className="flex-grow flex items-center justify-center gap-2 py-4 rounded-xl font-bold bg-primary text-white hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 duration-200 cursor-pointer disabled:opacity-50"
+                      className="flex-grow flex items-center justify-center gap-2 px-4 py-4 rounded-xl font-bold bg-primary text-white hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 duration-200 cursor-pointer disabled:opacity-50"
                     >
                       <span>Beli Sekarang</span>
                     </button>

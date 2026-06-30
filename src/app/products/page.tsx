@@ -267,10 +267,10 @@ function ProductsContent() {
                       {product.stock > 0 ? (
                         <button
                           onClick={() => handleQuickAdd(product.id, product.stock)}
-                          className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-primary hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition shadow-sm hover:scale-[1.02] active:scale-95 duration-200 cursor-pointer"
+                          className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition shadow-sm hover:scale-[1.02] active:scale-95 duration-200 cursor-pointer"
                         >
                           <ShoppingCart size={14} />
-                          Tambah ke Keranjang
+                          <span>Tambah ke Keranjang</span>
                         </button>
                       ) : (
                         <button

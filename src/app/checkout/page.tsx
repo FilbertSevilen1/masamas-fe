@@ -96,7 +96,7 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={loading || items.length === 0}
-                className="w-full flex items-center justify-center gap-2 bg-primary text-white py-4 rounded-xl font-bold hover:bg-primary-dark transition shadow-lg shadow-primary/30 disabled:opacity-50 text-lg"
+                className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl font-bold bg-primary text-white hover:bg-primary-dark transition shadow-lg shadow-primary/30 disabled:opacity-50 text-lg"
               >
                 {loading ? 'Memproses...' : <><CreditCard size={20} /> Buat Pesanan</>}
               </button>

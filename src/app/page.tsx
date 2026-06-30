@@ -638,10 +638,10 @@ export default function HomePage() {
                         {product.stock > 0 ? (
                           <button
                             onClick={() => handleQuickAdd(product.id, product.stock)}
-                            className="relative w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-emerald-600 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider transition shadow-md hover:scale-[1.01] active:scale-95 duration-200 cursor-pointer"
+                            className="relative w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary hover:bg-emerald-600 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider transition shadow-md hover:scale-[1.01] active:scale-95 duration-200 cursor-pointer"
                           >
                             <ShoppingCart size={15} />
-                            Tambah ke Keranjang
+                            <span>Tambah ke Keranjang</span>
                           </button>
                         ) : (
                           <button
