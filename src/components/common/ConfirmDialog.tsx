@@ -96,7 +96,7 @@ export default function ConfirmDialog({
                 if (onCancel) onCancel();
                 onClose();
               }}
-              className="px-4 py-2.5 text-sm font-semibold text-gray-600 hover:text-charcoal hover:bg-gray-50 border border-gray-200 rounded-xl transition cursor-pointer"
+              className="px-4 py-2.5 text-sm font-semibold text-gray-600 hover:text-charcoal hover:bg-gray-50 border border-gray-200 rounded-xl transition cursor-pointer mr-auto"
             >
               {cancelText}
             </button>

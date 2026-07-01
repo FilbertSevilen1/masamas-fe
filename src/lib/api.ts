@@ -14,6 +14,27 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // 401 Unauthorized indicates the token is expired or invalid
+    if (error.response && error.response.status === 401) {
+      if (typeof window !== 'undefined') {
+        clearAuth();
+        localStorage.removeItem('userName');
+        
+        // Prevent infinite loops if they are already on the login page
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = `/login?redirect=${encodeURIComponent(
+            window.location.pathname + window.location.search
+          )}`;
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Auth helpers — stores in both localStorage (for API) and cookie (for middleware)
 export const saveAuth = (token: string, role: string) => {
   localStorage.setItem('token', token);

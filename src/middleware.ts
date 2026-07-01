@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isTokenExpired } from '@/lib/jwt';
 
 // Public routes — no auth required
 const PUBLIC_ROUTES = ['/', '/login', '/register', '/products', '/categories', '/about', '/contact', '/cart'];
@@ -14,6 +15,8 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const role = request.cookies.get('role')?.value;
 
+  const isExpired = token ? isTokenExpired(token) : true;
+
   // Allow public routes always
   const isPublic = PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith('/products') || pathname.startsWith('/categories')
@@ -27,10 +30,14 @@ export function middleware(request: NextRequest) {
   // Admin routes — must be ADMIN
   const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
   if (isAdminRoute) {
-    if (!token) {
+    if (!token || isExpired) {
       const response = NextResponse.redirect(new URL('/login?redirect=' + pathname, request.url));
       response.headers.set('x-middleware-cache', 'no-cache');
       response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+      if (token) {
+        response.cookies.delete('token');
+        response.cookies.delete('role');
+      }
       return response;
     }
     if (role !== 'ADMIN') {
@@ -47,10 +54,14 @@ export function middleware(request: NextRequest) {
   // Private user routes — must be logged in
   const isPrivate = PRIVATE_ROUTES.some((route) => pathname.startsWith(route));
   if (isPrivate) {
-    if (!token) {
+    if (!token || isExpired) {
       const response = NextResponse.redirect(new URL('/login?redirect=' + pathname, request.url));
       response.headers.set('x-middleware-cache', 'no-cache');
       response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+      if (token) {
+        response.cookies.delete('token');
+        response.cookies.delete('role');
+      }
       return response;
     }
     const response = NextResponse.next();

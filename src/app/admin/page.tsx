@@ -25,7 +25,7 @@ export default function AdminDashboardPage() {
   const menuItems = [
     { href: '/admin/products', icon: Package, label: 'Kelola Produk', desc: 'Tambah, edit, hapus produk' },
     { href: '/admin/categories', icon: Tag, label: 'Kelola Kategori', desc: 'Atur kategori produk' },
-    { href: '/admin/cms', icon: FileEdit, label: 'CMS Landing Page', desc: 'Edit konten halaman utama' },
+    { href: '/admin/cms', icon: FileEdit, label: 'Pengaturan', desc: 'Edit konten halaman utama' },
   ];
 
   return (

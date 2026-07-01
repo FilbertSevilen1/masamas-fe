@@ -407,7 +407,7 @@ export default function AdminCMSPage() {
       <div className="px-6 py-10">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-charcoal">CMS Landing Page</h1>
+            <h1 className="text-3xl font-bold text-charcoal">Pengaturan</h1>
             <p className="text-gray-500 mt-1">Edit konten halaman utama website</p>
           </div>
           <button onClick={fetchAll} className="flex items-center gap-2 px-4 py-2.5 border border-slate-300 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition shadow-sm">

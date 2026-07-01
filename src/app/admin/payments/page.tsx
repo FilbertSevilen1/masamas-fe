@@ -28,6 +28,7 @@ interface Payment {
   createdAt: string;
   order: { 
     id: number; 
+    orderNumber?: string | null;
     totalPrice: string; 
     user: { name: string; email: string }; 
     items: { product: { name: string }; quantity: number }[] 
@@ -53,6 +54,7 @@ export default function AdminPaymentsPage() {
   const [selected, setSelected] = useState<Payment | null>(null);
   const [note, setNote] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   
   // Dialog State
   const [dialog, setDialog] = useState<{
@@ -154,17 +156,17 @@ export default function AdminPaymentsPage() {
     
     if (status === 'APPROVED') {
       title = 'Setujui Pembayaran';
-      message = `Apakah Anda yakin ingin menyetujui pembayaran untuk pesanan #${selected.order.id} sebesar Rp ${Number(selected.order.totalPrice).toLocaleString('id-ID')}?`;
+      message = `Apakah Anda yakin ingin menyetujui pembayaran untuk pesanan #${selected.order.orderNumber || selected.order.id} sebesar Rp ${Number(selected.order.totalPrice).toLocaleString('id-ID')}?`;
       confirmText = 'Ya, Setujui';
       type = 'success';
     } else if (status === 'RETURNED') {
       title = 'Minta Upload Ulang';
-      message = `Apakah Anda yakin ingin meminta pelanggan pesanan #${selected.order.id} untuk mengunggah ulang bukti transfer?`;
+      message = `Apakah Anda yakin ingin meminta pelanggan pesanan #${selected.order.orderNumber || selected.order.id} untuk mengunggah ulang bukti transfer?`;
       confirmText = 'Ya, Minta';
       type = 'warning';
     } else if (status === 'REJECTED') {
       title = 'Tolak Pembayaran';
-      message = `Apakah Anda yakin ingin menolak pembayaran untuk pesanan #${selected.order.id}? Tindakan ini akan membatalkan status pembayaran.`;
+      message = `Apakah Anda yakin ingin menolak pembayaran untuk pesanan #${selected.order.orderNumber || selected.order.id}? Tindakan ini akan membatalkan status pembayaran.`;
       confirmText = 'Ya, Tolak';
       type = 'danger';
     } else {
@@ -182,9 +184,9 @@ export default function AdminPaymentsPage() {
           await api.patch(`/payments/${selected.id}/status`, { status, adminNote: note });
           
           const successMessages: Record<string, string> = {
-            APPROVED: `Pembayaran pesanan #${selected.order.id} berhasil disetujui!`,
-            RETURNED: `Pembayaran pesanan #${selected.order.id} dikembalikan untuk diupload ulang.`,
-            REJECTED: `Pembayaran pesanan #${selected.order.id} ditolak.`,
+            APPROVED: `Pembayaran pesanan #${selected.order.orderNumber || selected.order.id} berhasil disetujui!`,
+            RETURNED: `Pembayaran pesanan #${selected.order.orderNumber || selected.order.id} dikembalikan untuk diupload ulang.`,
+            REJECTED: `Pembayaran pesanan #${selected.order.orderNumber || selected.order.id} ditolak.`,
           };
           
           triggerSnackbar(successMessages[status] || 'Status berhasil diperbarui', 'success');
@@ -210,6 +212,7 @@ export default function AdminPaymentsPage() {
     const matchSearch = !search || 
       p.order.user.name.toLowerCase().includes(search.toLowerCase()) || 
       String(p.order.id).includes(search) || 
+      (p.order.orderNumber && p.order.orderNumber.toLowerCase().includes(search.toLowerCase())) ||
       p.order.user.email.toLowerCase().includes(search.toLowerCase());
     const matchStatus = !statusFilter || p.status === statusFilter;
     return matchSearch && matchStatus;
@@ -374,7 +377,7 @@ export default function AdminPaymentsPage() {
                   const labelCfg = STATUS_LABELS[p.status] || { label: p.status, color: 'bg-gray-100 text-gray-600' };
                   return (
                     <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                      <td className="p-4 font-bold text-charcoal">#{p.order.id}</td>
+                      <td className="p-4 font-bold text-charcoal">#{p.order.orderNumber || p.order.id}</td>
                       <td className="p-4">
                         <p className="font-semibold text-charcoal">{p.order.user.name}</p>
                         <p className="text-xs text-gray-400">{p.order.user.email}</p>
@@ -431,7 +434,7 @@ export default function AdminPaymentsPage() {
             {/* Header */}
             <div className="bg-charcoal text-white p-6 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-lg font-bold">Verifikasi Pembayaran Pesanan #{selected.order.id}</h2>
+                <h2 className="text-lg font-bold">Verifikasi Pembayaran Pesanan #{selected.order.orderNumber || selected.order.id}</h2>
                 <p className="text-xs text-gray-300 mt-1">Ditinjau oleh Admin Masamas</p>
               </div>
               <button 
@@ -454,14 +457,13 @@ export default function AdminPaymentsPage() {
                     alt="Bukti Transfer Fisik" 
                     className="w-full h-full object-contain" 
                   />
-                  <a 
-                    href={selected.imageUrl} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold text-xs transition"
+                  <button 
+                    type="button"
+                    onClick={() => setPreviewImage(selected.imageUrl)}
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold text-xs transition cursor-pointer w-full h-full border-0"
                   >
                     Buka Ukuran Asli
-                  </a>
+                  </button>
                 </div>
               </div>
 
@@ -501,20 +503,25 @@ export default function AdminPaymentsPage() {
             </div>
 
             <div className="bg-gray-50 p-4 border-t border-gray-100 flex flex-wrap gap-2 justify-end items-center shrink-0">
-              {selected.status === 'APPROVED' && (
-                <span className="text-xs text-green-600 font-bold bg-green-50 border border-green-200 px-4 py-2.5 rounded-xl flex items-center gap-1.5 mr-auto">
-                  <CheckCircle size={16} /> Pembayaran Telah Disetujui
-                </span>
-              )}
-              
               <button
                 onClick={() => setSelected(null)}
-                className="px-4 py-2.5 border border-gray-300 text-charcoal font-semibold rounded-xl text-sm hover:bg-gray-100 transition"
+                className="px-4 py-2.5 border border-gray-300 text-charcoal font-semibold rounded-xl text-sm hover:bg-gray-100 transition mr-auto"
               >
                 Kembali
               </button>
+
+              {selected.status === 'APPROVED' && (
+                <span className="text-xs text-green-600 font-bold bg-green-50 border border-green-200 px-4 py-2.5 rounded-xl flex items-center gap-1.5">
+                  <CheckCircle size={16} /> Pembayaran Telah Disetujui
+                </span>
+              )}
+              {selected.status === 'REJECTED' && (
+                <span className="text-xs text-red-600 font-bold bg-red-50 border border-red-200 px-4 py-2.5 rounded-xl flex items-center gap-1.5 font-bold">
+                  <XCircle size={16} /> Pembayaran Telah Ditolak & Terkunci
+                </span>
+              )}
               
-              {selected.status !== 'APPROVED' && (
+              {selected.status !== 'APPROVED' && selected.status !== 'REJECTED' && (
                 <>
                   <button
                     onClick={() => handleUpdate('RETURNED')}
@@ -547,6 +554,37 @@ export default function AdminPaymentsPage() {
         </div>
       )}
       
+      {/* Premium Image Preview Modal */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in cursor-pointer"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center">
+            {/* Close button */}
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition shadow-lg border-0 cursor-pointer"
+              title="Tutup"
+            >
+              <X size={24} />
+            </button>
+            
+            {/* Image container */}
+            <div 
+              className="bg-white rounded-2xl overflow-hidden p-3 shadow-2xl max-w-full max-h-[80vh] flex items-center justify-center border border-white/20 cursor-default"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={previewImage} 
+                alt="Pratinjau Gambar" 
+                className="max-w-full max-h-[75vh] object-contain rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <ConfirmDialog
         isOpen={dialog.isOpen}
         type={dialog.type}

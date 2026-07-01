@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Menu,
   X,
+  Settings,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -22,10 +23,10 @@ const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/products', label: 'Produk', icon: Package },
   { href: '/admin/categories', label: 'Kategori', icon: Tag },
-  { href: '/admin/orders', label: 'Pesanan', icon: ShoppingBag },
   { href: '/admin/payments', label: 'Pembayaran', icon: CreditCard },
+  { href: '/admin/orders', label: 'Pesanan', icon: ShoppingBag },
   { href: '/admin/users', label: 'Pengguna', icon: Users },
-  { href: '/admin/cms', label: 'CMS Landing Page', icon: FileEdit },
+  { href: '/admin/cms', label: 'Pengaturan', icon: Settings },
 ];
 
 export default function AdminSidebar() {

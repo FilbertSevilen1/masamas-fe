@@ -31,6 +31,7 @@ interface OrderItem {
 
 interface Order {
   id: number;
+  orderNumber?: string | null;
   status: string;
   paymentStatus: string;
   shippingStatus: string;
@@ -41,7 +42,7 @@ interface Order {
   shippingAddr: string;
   user?: { id: number; name: string; email: string; whatsapp?: string | null };
   items: OrderItem[];
-  paymentConfirm?: { status: string; adminNote: string | null };
+  paymentConfirm?: { imageUrl?: string | null; status: string; adminNote: string | null };
 }
 
 const PAYMENT_STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -79,6 +80,8 @@ export default function UserOrdersPage() {
     type: 'success' as 'success' | 'error' | 'warning' | 'info',
     visible: false
   });
+
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => { 
     fetchOrders(); 
@@ -192,7 +195,7 @@ export default function UserOrdersPage() {
                   {/* Card Header */}
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-6 border-b border-gray-50 bg-gray-50/20 gap-4">
                     <div>
-                      <h3 className="text-lg font-black text-charcoal">Pesanan #{order.id}</h3>
+                      <h3 className="text-lg font-black text-charcoal">Pesanan #{order.orderNumber || order.id}</h3>
                       <p className="text-xs text-gray-400 mt-0.5">{new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                     </div>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-left sm:text-right w-full sm:w-auto justify-between sm:justify-end">
@@ -232,13 +235,11 @@ export default function UserOrdersPage() {
                       </div>
                       
                       {/* Payment Actions */}
-                      {order.shippingStatus !== 'CANCELLED' && (order.paymentStatus === 'PENDING' || order.paymentStatus === 'RETURNED' || order.paymentStatus === 'REJECTED') && (
+                      {order.shippingStatus !== 'CANCELLED' && (order.paymentStatus === 'PENDING' || order.paymentStatus === 'RETURNED') && (
                         <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between gap-4 mt-2">
                           <p className="text-xs text-blue-700 leading-tight">
                             {order.paymentStatus === 'RETURNED'
                               ? 'Bukti transfer dikembalikan admin untuk di-upload ulang. Harap periksa catatan verifikasi di bawah dan unggah bukti baru.'
-                              : order.paymentStatus === 'REJECTED' 
-                              ? 'Bukti transfer ditolak admin, silakan upload ulang bukti pembayaran yang valid.'
                               : 'Mohon transfer ke rekening toko dan unggah bukti pembayaran.'}
                           </p>
                           <Link 
@@ -247,6 +248,29 @@ export default function UserOrdersPage() {
                           >
                             <Upload size={13} /> Upload Bukti
                           </Link>
+                        </div>
+                      )}
+
+                      {order.paymentConfirm?.imageUrl && (
+                        <div className="bg-blue-50/50 border border-blue-100 p-3 rounded-lg space-y-2 mt-2">
+                          <div className="flex items-center gap-1.5 text-xs text-blue-800 font-bold">
+                            <ImageIcon size={14} /> Bukti Pembayaran Anda
+                          </div>
+                          
+                          <div className="aspect-video bg-gray-50 border rounded-lg overflow-hidden relative group max-h-32">
+                            <img 
+                              src={order.paymentConfirm.imageUrl} 
+                              alt="Bukti Pembayaran" 
+                              className="w-full h-full object-contain"
+                            />
+                            <button 
+                              type="button"
+                              onClick={() => setPreviewImage(order.paymentConfirm?.imageUrl || null)}
+                              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold text-[10px] transition cursor-pointer w-full h-full border-0"
+                            >
+                              Buka Gambar
+                            </button>
+                          </div>
                         </div>
                       )}
 
@@ -279,14 +303,13 @@ export default function UserOrdersPage() {
                               alt="Bukti Pengiriman" 
                               className="w-full h-full object-contain"
                             />
-                            <a 
-                              href={order.deliveryProof} 
-                              target="_blank" 
-                              rel="noreferrer" 
-                              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold text-[10px] transition"
+                            <button 
+                              type="button"
+                              onClick={() => setPreviewImage(order.deliveryProof)}
+                              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold text-[10px] transition cursor-pointer w-full h-full border-0"
                             >
                               Buka Gambar
-                            </a>
+                            </button>
                           </div>
 
                           {order.deliveryNote && (
@@ -363,20 +386,20 @@ export default function UserOrdersPage() {
               </h3>
               
               <p className="text-sm text-gray-500 leading-relaxed mb-6">
-                Apakah Anda yakin ingin membatalkan <strong>Pesanan #{cancelModal.orderId}</strong>? Tindakan ini bersifat permanen dan pesanan tidak dapat diaktifkan kembali.
+                Apakah Anda yakin ingin membatalkan <strong>Pesanan #{orders.find(o => o.id === cancelModal.orderId)?.orderNumber || cancelModal.orderId}</strong>? Tindakan ini bersifat permanen dan pesanan tidak dapat diaktifkan kembali.
               </p>
               
               {/* Action Buttons */}
               <div className="flex items-center gap-3 w-full">
                 <button
                   onClick={() => setCancelModal({ visible: false, orderId: null })}
-                  className="flex-1 py-3.5 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition font-bold text-sm shadow-sm"
+                  className="px-5 py-3.5 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition font-bold text-sm shadow-sm mr-auto"
                 >
                   Kembali
                 </button>
                 <button
                   onClick={confirmCancelOrder}
-                  className="flex-1 py-3.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition font-bold text-sm shadow-lg shadow-red-200"
+                  className="px-5 py-3.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition font-bold text-sm shadow-lg shadow-red-200"
                 >
                   Ya, Batalkan
                 </button>
@@ -409,6 +432,37 @@ export default function UserOrdersPage() {
           </div>
         </div>
       )}
+      {/* Premium Image Preview Modal */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in cursor-pointer"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center">
+            {/* Close button */}
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition shadow-lg border-0 cursor-pointer"
+              title="Tutup"
+            >
+              <X size={24} />
+            </button>
+            
+            {/* Image container */}
+            <div 
+              className="bg-white rounded-2xl overflow-hidden p-3 shadow-2xl max-w-full max-h-[80vh] flex items-center justify-center border border-white/20 cursor-default"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={previewImage} 
+                alt="Pratinjau Gambar" 
+                className="max-w-full max-h-[75vh] object-contain rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </main>
   );

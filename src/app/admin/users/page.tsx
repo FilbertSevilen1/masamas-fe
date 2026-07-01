@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import Pagination from '@/components/common/Pagination';
+import { useAuthStore } from '@/store/useAuthStore';
 import { 
   User, 
   Shield, 
@@ -30,6 +31,7 @@ interface UserItem {
 }
 
 export default function AdminUsersPage() {
+  const { userId } = useAuthStore();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -146,6 +148,23 @@ export default function AdminUsersPage() {
       triggerSnackbar('Password wajib diisi untuk pengguna baru', 'warning');
       return;
     }
+    if (password) {
+      const isMinLength = password.length >= 8;
+      const hasUpperLower = /[a-z]/.test(password) && /[A-Z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      const hasSymbol = /[^a-zA-Z0-9]/.test(password);
+
+      if (!isMinLength || !hasUpperLower || !hasNumber || !hasSymbol) {
+        let pwdError = '';
+        if (!isMinLength) pwdError = 'Password harus minimal 8 karakter.';
+        else if (!hasUpperLower) pwdError = 'Password harus mengandung kombinasi huruf besar dan huruf kecil.';
+        else if (!hasNumber) pwdError = 'Password harus mengandung setidaknya satu angka.';
+        else if (!hasSymbol) pwdError = 'Password harus mengandung setidaknya satu simbol.';
+        
+        triggerSnackbar(pwdError, 'warning');
+        return;
+      }
+    }
     showConfirm(
       modalMode === 'create' ? 'Tambah Pengguna' : 'Ubah Pengguna',
       modalMode === 'create'
@@ -180,6 +199,10 @@ export default function AdminUsersPage() {
   };
 
   const handleOpenDelete = (user: UserItem) => {
+    if (userId && user.id === userId) {
+      triggerSnackbar('Anda tidak dapat menghapus akun Anda sendiri!', 'error');
+      return;
+    }
     showConfirm(
       'Hapus Pengguna',
       `Apakah Anda yakin ingin menghapus akun milik ${user.name} (${user.email})? Tindakan ini bersifat permanen dan tidak dapat dibatalkan.`,
@@ -326,13 +349,15 @@ export default function AdminUsersPage() {
                         >
                           <Edit2 size={16} />
                         </button>
-                        <button
-                          onClick={() => handleOpenDelete(u)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition"
-                          title="Hapus Pengguna"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {userId !== u.id && (
+                          <button
+                            onClick={() => handleOpenDelete(u)}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition"
+                            title="Hapus Pengguna"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -440,7 +465,7 @@ export default function AdminUsersPage() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-5 py-2.5 border border-gray-300 text-charcoal font-semibold rounded-xl text-sm hover:bg-gray-100 transition"
+                  className="px-5 py-2.5 border border-gray-300 text-charcoal font-semibold rounded-xl text-sm hover:bg-gray-100 transition mr-auto"
                 >
                   Batal
                 </button>

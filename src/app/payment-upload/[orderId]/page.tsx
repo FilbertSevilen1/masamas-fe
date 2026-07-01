@@ -6,10 +6,11 @@ import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import api from '@/lib/api';
 import Link from 'next/link';
-import { Upload, CheckCircle, ArrowLeft, CreditCard } from 'lucide-react';
+import { Upload, CheckCircle, ArrowLeft, CreditCard, XCircle } from 'lucide-react';
 
 interface Order {
   id: number;
+  orderNumber?: string | null;
   totalPrice: string;
   status: string;
   shippingAddr: string;
@@ -91,6 +92,35 @@ export default function PaymentUploadPage() {
     </main>
   );
 
+  const isLocked = order && (
+    order.status === 'REJECTED' || 
+    order.status === 'CANCELLED' || 
+    order.status === 'DELIVERED'
+  );
+
+  if (isLocked) {
+    return (
+      <main className="min-h-screen flex flex-col bg-gray-50">
+        <Navbar />
+        <div className="flex-grow flex items-center justify-center px-4 py-16">
+          <div className="bg-white rounded-2xl p-12 shadow-sm text-center max-w-md w-full">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <XCircle size={40} className="text-red-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-charcoal mb-3">Transaksi Terkunci</h2>
+            <p className="text-gray-500 mb-8 font-medium leading-relaxed">
+              Pesanan ini telah selesai, dibatalkan, atau pembayaran ditolak secara permanen. Anda tidak dapat mengunggah bukti pembayaran lagi.
+            </p>
+            <Link href="/orders" className="w-full block bg-primary text-white py-4 rounded-xl font-bold hover:bg-primary-dark transition text-center shadow-lg shadow-primary/20">
+              Kembali ke Pesanan Saya
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
@@ -134,7 +164,7 @@ export default function PaymentUploadPage() {
         {/* Order Summary */}
         {order && (
           <div className="bg-white p-6 rounded-2xl shadow-sm mb-6">
-            <h3 className="font-bold text-charcoal mb-4">Ringkasan Pesanan #{order.id}</h3>
+            <h3 className="font-bold text-charcoal mb-4">Ringkasan Pesanan #{order.orderNumber || order.id}</h3>
             {order.items.map((item, i) => (
               <div key={i} className="flex justify-between text-sm text-gray-600 mb-2">
                 <span>{item.product.name} × {item.quantity}</span>

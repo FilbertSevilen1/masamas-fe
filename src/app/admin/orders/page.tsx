@@ -29,6 +29,7 @@ import {
 
 interface Order {
   id: number;
+  orderNumber?: string | null;
   status: string;
   paymentStatus: string;
   shippingStatus: string;
@@ -81,6 +82,7 @@ export default function AdminOrdersPage() {
   const [modalShippingStatus, setModalShippingStatus] = useState('');
   const [deliveryNote, setDeliveryNote] = useState('');
   const [deliveryProof, setDeliveryProof] = useState('');
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Dialog State
@@ -182,7 +184,7 @@ export default function AdminOrdersPage() {
     if (!selectedOrder) return;
     showConfirm(
       'Simpan Perubahan Pesanan',
-      `Apakah Anda yakin ingin menyimpan semua perubahan detail dan pengiriman untuk pesanan #${selectedOrder.id}?`,
+      `Apakah Anda yakin ingin menyimpan semua perubahan detail dan pengiriman untuk pesanan #${selectedOrder.orderNumber || selectedOrder.id}?`,
       async () => {
         setIsSaving(true);
         try {
@@ -200,7 +202,7 @@ export default function AdminOrdersPage() {
             deliveryNote: deliveryNote
           } : o));
     
-          triggerSnackbar(`Pesanan #${selectedOrder.id} berhasil diperbarui!`, 'success');
+          triggerSnackbar(`Pesanan #${selectedOrder.orderNumber || selectedOrder.id} berhasil diperbarui!`, 'success');
           setSelectedOrder(null);
         } catch {
           triggerSnackbar('Gagal menyimpan pembaruan pesanan', 'error');
@@ -217,7 +219,7 @@ export default function AdminOrdersPage() {
     if (!selectedOrder) return;
     showConfirm(
       'Selesaikan Pesanan',
-      `Apakah Anda yakin ingin menyelesaikan pesanan #${selectedOrder.id}? Tindakan ini akan menandai pengiriman sukses/terkirim dan pesanan akan dikunci secara permanen.`,
+      `Apakah Anda yakin ingin menyelesaikan pesanan #${selectedOrder.orderNumber || selectedOrder.id}? Tindakan ini akan menandai pengiriman sukses/terkirim dan pesanan akan dikunci secara permanen.`,
       async () => {
         setIsSaving(true);
         try {
@@ -235,7 +237,7 @@ export default function AdminOrdersPage() {
             deliveryNote: deliveryNote
           } : o));
     
-          triggerSnackbar(`Pesanan #${selectedOrder.id} berhasil diselesaikan & dikunci secara permanen!`, 'success');
+          triggerSnackbar(`Pesanan #${selectedOrder.orderNumber || selectedOrder.id} berhasil diselesaikan & dikunci secara permanen!`, 'success');
           setSelectedOrder(null);
         } catch {
           triggerSnackbar('Gagal menyelesaikan pesanan', 'error');
@@ -257,6 +259,7 @@ export default function AdminOrdersPage() {
     const matchSearch = !search || 
       o.user.name.toLowerCase().includes(search.toLowerCase()) || 
       String(o.id).includes(search) ||
+      (o.orderNumber && o.orderNumber.toLowerCase().includes(search.toLowerCase())) ||
       o.shippingAddr.toLowerCase().includes(search.toLowerCase());
     const matchPayment = !paymentFilter || o.paymentStatus === paymentFilter;
     const matchShipping = !shippingFilter || o.shippingStatus === shippingFilter;
@@ -405,7 +408,7 @@ export default function AdminOrdersPage() {
                   const shipCfg = getShippingStatusConfig(order.shippingStatus);
                   return (
                     <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                      <td className="p-4 font-bold text-charcoal">#{order.id}</td>
+                      <td className="p-4 font-bold text-charcoal">#{order.orderNumber || order.id}</td>
                       <td className="p-4">
                         <p className="font-semibold text-charcoal">{order.user.name}</p>
                         <p className="text-xs text-gray-400">{order.user.email}</p>
@@ -481,7 +484,7 @@ export default function AdminOrdersPage() {
             {/* Modal Header */}
             <div className="bg-charcoal text-white p-6 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-bold">Kelola Pesanan #{selectedOrder.id}</h2>
+                <h2 className="text-xl font-bold">Kelola Pesanan #{selectedOrder.orderNumber || selectedOrder.id}</h2>
                 <p className="text-xs text-gray-300 mt-1">Dibuat pada {new Date(selectedOrder.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
               </div>
               <button 
@@ -609,14 +612,13 @@ export default function AdminOrdersPage() {
                             alt="Bukti Transfer" 
                             className="w-full h-full object-contain"
                           />
-                          <a 
-                            href={selectedOrder.paymentConfirm.imageUrl} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold text-xs transition"
+                          <button 
+                            type="button"
+                            onClick={() => setPreviewImage(selectedOrder.paymentConfirm?.imageUrl || null)}
+                            className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold text-xs transition cursor-pointer w-full h-full border-0"
                           >
                             Klik untuk Lihat Ukuran Penuh
-                          </a>
+                          </button>
                         </div>
                         {selectedOrder.paymentConfirm.adminNote && (
                           <div className="p-2.5 bg-yellow-50 border border-yellow-150 rounded-lg text-xs text-yellow-800">
@@ -674,11 +676,18 @@ export default function AdminOrdersPage() {
                             alt="Bukti Pengiriman" 
                             className="w-full h-full object-contain"
                           />
+                          <button 
+                            type="button"
+                            onClick={() => setPreviewImage(deliveryProof)}
+                            className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold text-xs transition cursor-pointer w-full h-full border-0"
+                          >
+                            Klik untuk Lihat Ukuran Penuh
+                          </button>
                           {!isOrderLocked && selectedOrder.paymentStatus === 'APPROVED' && (
                             <button
                               type="button"
                               onClick={() => setDeliveryProof('')}
-                              className="absolute top-2 right-2 p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition shadow"
+                              className="absolute top-2 right-2 p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition shadow z-10 cursor-pointer"
                             >
                               <X size={14} />
                             </button>
@@ -753,7 +762,7 @@ export default function AdminOrdersPage() {
             <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-end gap-3 shrink-0 flex-wrap">
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="px-5 py-2.5 border border-gray-300 text-charcoal font-semibold rounded-xl text-sm hover:bg-gray-100 transition"
+                className="px-5 py-2.5 border border-gray-300 text-charcoal font-semibold rounded-xl text-sm hover:bg-gray-100 transition mr-auto"
               >
                 {isOrderLocked ? 'Tutup Detail' : 'Batal'}
               </button>
@@ -811,6 +820,37 @@ export default function AdminOrdersPage() {
         </div>
       )}
       
+      {/* Premium Image Preview Modal */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in cursor-pointer"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center">
+            {/* Close button */}
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition shadow-lg border-0 cursor-pointer"
+              title="Tutup"
+            >
+              <X size={24} />
+            </button>
+            
+            {/* Image container */}
+            <div 
+              className="bg-white rounded-2xl overflow-hidden p-3 shadow-2xl max-w-full max-h-[80vh] flex items-center justify-center border border-white/20 cursor-default"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={previewImage} 
+                alt="Pratinjau Gambar" 
+                className="max-w-full max-h-[75vh] object-contain rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <ConfirmDialog
         isOpen={dialog.isOpen}
         type={dialog.type}

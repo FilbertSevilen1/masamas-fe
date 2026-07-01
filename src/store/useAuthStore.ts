@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import { clearAuth, getStoredRole } from '@/lib/api';
+import { isTokenExpired, getUserIdFromToken } from '@/lib/jwt';
 
 interface AuthState {
   token: string | null;
   role: string | null;
   name: string | null;
+  userId: number | null;
   isLoggedIn: boolean;
   isAdmin: boolean;
   init: () => void;
@@ -16,6 +18,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   role: null,
   name: null,
+  userId: null,
   isLoggedIn: false,
   isAdmin: false,
 
@@ -25,10 +28,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     const role = localStorage.getItem('role');
     const name = localStorage.getItem('userName');
     if (token && role) {
+      if (isTokenExpired(token)) {
+        clearAuth();
+        localStorage.removeItem('userName');
+        set({ token: null, role: null, name: null, userId: null, isLoggedIn: false, isAdmin: false });
+        return;
+      }
+      const userId = getUserIdFromToken(token);
       set({
         token,
         role,
         name,
+        userId,
         isLoggedIn: true,
         isAdmin: role === 'ADMIN',
       });
@@ -39,12 +50,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.setItem('token', token);
     localStorage.setItem('role', role);
     localStorage.setItem('userName', name);
-    set({ token, role, name, isLoggedIn: true, isAdmin: role === 'ADMIN' });
+    const userId = getUserIdFromToken(token);
+    set({ token, role, name, userId, isLoggedIn: true, isAdmin: role === 'ADMIN' });
   },
 
   logout: () => {
     clearAuth();
     localStorage.removeItem('userName');
-    set({ token: null, role: null, name: null, isLoggedIn: false, isAdmin: false });
+    set({ token: null, role: null, name: null, userId: null, isLoggedIn: false, isAdmin: false });
   },
 }));
