@@ -76,8 +76,8 @@ export default function RegisterPage() {
               <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/30">
                 <span className="text-white font-bold text-3xl">M</span>
               </div>
-              <h1 className="text-3xl font-bold text-charcoal">Create Account</h1>
-              <p className="text-gray-500 mt-2">Join Masamas today — it's free</p>
+              <h1 className="text-3xl font-bold text-charcoal">Buat Akun</h1>
+              <p className="text-gray-500 mt-2">Bergabunglah dengan Masamas hari ini</p>
             </div>
 
             {error && (
